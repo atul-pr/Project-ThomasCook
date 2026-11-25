@@ -1,0 +1,121 @@
+<section class="manage-header">
+  <h1>Manage Booking</h1>
+  <p class="muted">Retrieve your reservation details using your unique booking reference and email address.</p>
+</section>
+
+<form class="card lookup-card" (ngSubmit)="lookup()">
+  <div class="lookup-grid">
+    <div class="field">
+      <label for="reference">Booking Reference</label>
+      <input
+        id="reference"
+        name="reference"
+        type="text"
+        [(ngModel)]="reference"
+        placeholder="e.g. HTL-7K9P2M4Q"
+        required
+      />
+    </div>
+    <div class="field">
+      <label for="email">Guest Email</label>
+      <input
+        id="email"
+        name="email"
+        type="email"
+        [(ngModel)]="email"
+        placeholder="you@example.com"
+        required
+      />
+    </div>
+    <div class="lookup-action">
+      <button type="submit" class="btn btn-primary" [disabled]="loading">
+        {{ loading ? 'Searching...' : 'Find Booking' }}
+      </button>
+    </div>
+  </div>
+</form>
+
+<app-error-banner [message]="errorMessage"></app-error-banner>
+
+@if (successMessage) {
+  <div class="success-banner" role="status">{{ successMessage }}</div>
+}
+
+@if (booking) {
+  <article class="card booking-card">
+    <div class="booking-top">
+      <div>
+        <span class="ref-label">Booking Reference</span>
+        <h2>{{ booking.bookingReference }}</h2>
+      </div>
+      <span
+        class="badge"
+        [class.badge-success]="booking.status === 'CONFIRMED'"
+        [class.badge-danger]="booking.status === 'CANCELLED'"
+      >
+        {{ booking.status }}
+      </span>
+    </div>
+
+    <div class="detail-grid">
+      <div>
+        <h4>Stay Details</h4>
+        <p><strong>Hotel:</strong> {{ booking.hotelName }} ({{ booking.hotelCity }})</p>
+        <p><strong>Room:</strong> {{ booking.roomTypeName }}</p>
+        <p><strong>Check-in:</strong> {{ booking.checkInDate }}</p>
+        <p><strong>Check-out:</strong> {{ booking.checkOutDate }} ({{ booking.nights }} night{{ booking.nights > 1 ? 's' : '' }})</p>
+        <p><strong>Guests:</strong> {{ booking.guests }}</p>
+      </div>
+
+      <div>
+        <h4>Guest &amp; Price Snapshot</h4>
+        <p><strong>Guest:</strong> {{ booking.guestName }}</p>
+        <p><strong>Email:</strong> {{ booking.guestEmail }}</p>
+        @if (booking.guestPhone) {
+          <p><strong>Phone:</strong> {{ booking.guestPhone }}</p>
+        }
+        <p><strong>Rate / night:</strong> {{ booking.pricePerNightSnapshot | currency: booking.currency : 'symbol' : '1.0-0' }}</p>
+        <p><strong>Taxes (GST):</strong> {{ booking.taxAmountSnapshot | currency: booking.currency : 'symbol' : '1.0-2' }}</p>
+        <p class="total-line">
+          <strong>Total Paid Snapshot:</strong>
+          {{ booking.totalAmountSnapshot | currency: booking.currency : 'symbol' : '1.0-2' }}
+        </p>
+      </div>
+    </div>
+
+    @if (booking.specialRequests) {
+      <p class="special-req"><strong>Special Requests:</strong> {{ booking.specialRequests }}</p>
+    }
+
+    <div class="booking-footer">
+      <span class="muted timestamps">
+        Booked {{ booking.createdAt | date: 'medium' }}
+        @if (booking.cancelledAt) {
+          · Cancelled {{ booking.cancelledAt | date: 'medium' }}
+        }
+      </span>
+
+      <div class="footer-actions">
+        <a [routerLink]="['/hotels', booking.hotelId]" class="btn btn-secondary">View Hotel</a>
+
+        @if (booking.status === 'CONFIRMED') {
+          @if (!confirmCancelOpen) {
+            <button type="button" class="btn btn-danger" (click)="confirmCancelOpen = true">
+              Cancel Booking
+            </button>
+          } @else {
+            <div class="confirm-inline">
+              <span>Cancel and release room?</span>
+              <button type="button" class="btn btn-danger" [disabled]="cancelling" (click)="confirmCancellation()">
+                {{ cancelling ? 'Cancelling...' : 'Yes, Cancel' }}
+              </button>
+              <button type="button" class="btn btn-secondary" [disabled]="cancelling" (click)="confirmCancelOpen = false">
+                Keep Booking
+              </button>
+            </div>
+          }
+        }
+      </div>
+    </div>
+  </article>
+}

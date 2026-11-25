@@ -1,0 +1,275 @@
+.back-row {
+  margin-bottom: 1rem;
+}
+
+.back-link {
+  color: var(--blue-600);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+
+.panel {
+  padding: 1.5rem;
+}
+
+.hotel-hero {
+  display: grid;
+  grid-template-columns: 380px 1fr;
+  overflow: hidden;
+  margin-bottom: 1.25rem;
+  box-shadow: var(--shadow-md);
+}
+
+.hero-img {
+  width: 100%;
+  height: 100%;
+  min-height: 250px;
+  object-fit: cover;
+  display: block;
+}
+
+.hero-info {
+  padding: 1.45rem 1.65rem;
+
+  h1 {
+    margin: 0.5rem 0 0.25rem;
+    font-size: 1.75rem;
+  }
+}
+
+.hero-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.city-tag {
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--blue-600);
+}
+
+.address-line {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.hero-desc {
+  margin: 0.85rem 0 1rem;
+  color: var(--text-secondary);
+}
+
+.date-bar {
+  padding: 1.1rem 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.date-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 0.85fr auto;
+  gap: 0.8rem;
+  align-items: end;
+}
+
+.confirmation-card {
+  padding: 1.45rem;
+  margin-bottom: 1.5rem;
+  border-color: #86efac;
+  background: #f0fdf4;
+}
+
+.conf-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+
+  h2 {
+    margin: 0.4rem 0 0;
+  }
+}
+
+.ref-box {
+  text-align: right;
+  background: #ffffff;
+  border: 1px solid #bbf7d0;
+  padding: 0.6rem 1rem;
+  border-radius: 10px;
+
+  span {
+    display: block;
+    font-size: 0.75rem;
+  }
+
+  strong {
+    font-size: 1.15rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    color: var(--navy-900);
+  }
+}
+
+.conf-actions {
+  margin-top: 0.9rem;
+}
+
+.rooms-section h2 {
+  margin: 0 0 0.9rem;
+}
+
+.room-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.room-card {
+  display: grid;
+  grid-template-columns: 1.55fr 1fr;
+  gap: 1.4rem;
+  padding: 1.35rem;
+  transition: box-shadow 0.2s ease;
+
+  &:hover {
+    box-shadow: var(--shadow-md);
+  }
+}
+
+.room-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.6rem;
+
+  h3 {
+    margin: 0;
+    font-size: 1.2rem;
+  }
+}
+
+.room-desc {
+  margin: 0.5rem 0 0.85rem;
+  color: var(--text-secondary);
+  font-size: 0.94rem;
+}
+
+.availability-status {
+  margin-top: 0.95rem;
+}
+
+.alt-dates-box {
+  margin-top: 0.85rem;
+  padding: 0.85rem 1rem;
+  border-radius: 10px;
+  background: var(--blue-50);
+  border: 1px solid #bfdbfe;
+}
+
+.alt-title {
+  margin: 0 0 0.55rem;
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--navy-900);
+}
+
+.alt-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.alt-chip-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+  background: #ffffff;
+  border: 1px solid #93c5fd;
+  border-radius: 8px;
+  padding: 0.48rem 0.78rem;
+  cursor: pointer;
+  font-size: 0.8rem;
+  color: var(--navy-900);
+
+  &:hover {
+    border-color: var(--blue-600);
+    background: #f8fafc;
+  }
+
+  span {
+    color: var(--text-secondary);
+    font-size: 0.76rem;
+  }
+}
+
+.alt-empty {
+  margin: 0;
+  font-size: 0.83rem;
+}
+
+.room-side {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  justify-content: space-between;
+}
+
+.nightly-rate strong {
+  font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+  font-size: 1.4rem;
+  color: var(--navy-900);
+}
+
+.full-btn {
+  width: 100%;
+}
+
+.booking-form-card {
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  border-color: #93c5fd;
+  box-shadow: var(--shadow-md);
+}
+
+.form-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.15rem;
+
+  h2 {
+    margin: 0;
+  }
+
+  p {
+    margin: 0.25rem 0 0;
+  }
+}
+
+.booking-layout {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 1.5rem;
+}
+
+.guest-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.snapshot-note {
+  font-size: 0.82rem;
+  margin-top: 0.65rem;
+}
+
+@media (max-width: 860px) {
+  .hotel-hero,
+  .date-grid,
+  .room-card,
+  .booking-layout {
+    grid-template-columns: 1fr;
+  }
+}
