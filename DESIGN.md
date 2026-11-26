@@ -1,22 +1,30 @@
-# Architecture & System Design — Hotel Booking Portal
+# Architecture & System Design — StayAtlas Hotel Booking Portal
 
-## 1. Architectural Style: Scalable Modular Monolith
+## 1. Architecture and Component Interactions
 
-The system is structured as a **single deployable Modular Monolith** rather than microservices to avoid distributed transaction overhead, network serialization latency, and operational complexity while preserving strict module boundaries:
+StayAtlas is built as a **Scalable Modular Monolith** rather than microservices to avoid distributed transaction overhead while keeping clear domain boundaries.
 
-1. **Hotel Management (`com.hotelportal.hotel`)** — Property catalog, city filtering, pagination, sorting, and batch hotel-level availability summaries.
-2. **Room Management (`com.hotelportal.room`)** — Room inventory definitions (`totalRooms`, `maxGuests`, `basePricePerNight`) and per-hotel room availability views.
-3. **Availability Management (`com.hotelportal.availability`)** — Date-range validation, date-overlap capacity computation, and **Smart Alternative Dates** lookup.
-4. **Pricing Management (`com.hotelportal.pricing`)** — Authoritative server-side nightly subtotal, tax computation, and rounding (`HALF_UP`).
-5. **Booking Management (`com.hotelportal.booking`)** — Transactional reservation creation under pessimistic locking, unique reference generation, reference+email retrieval, and cancellation with capacity release.
-6. **Common (`com.hotelportal.common`)** — Cross-cutting CORS configuration, uniform `ApiError` responses, `PageResponse<T>` pagination envelope, and `GlobalExceptionHandler`.
+```text
+Angular 19 SPA (Lazy-Loaded Features: HotelSearch, HotelDetail, ManageBooking, InfoPage)
+        │  Stateless HTTP/JSON (CORS, Idempotency-Key)
+        ▼
+Spring Boot 3 REST Controllers (/api/hotels, /api/availability, /api/bookings, /api/health)
+        │
+        ├── Hotel Module        (HotelService, HotelRepository)
+        ├── Room Module         (RoomService, RoomTypeRepository)
+        ├── Availability Module (AvailabilityService, overlap math + Smart Alternative Dates)
+        ├── Pricing Module      (PricingService, BigDecimal INR + 12% GST)
+        └── Booking Module      (BookingService, BookingRepository, BookingReferenceGenerator)
+                │
+                ▼
+        HikariCP Pool -> MySQL / MariaDB (InnoDB + Flyway V1–V4)
+```
 
-Each module follows a strict layered flow:
-`Controller -> Service -> Repository -> Entity`, communicating through explicit DTOs and service interfaces rather than leaking JPA entities over HTTP.
+Each module follows `Controller -> Service -> Repository -> Entity` and exchanges immutable DTOs (`record` types), keeping JPA entities internal and `spring.jpa.open-in-view=false`.
 
 ---
 
-## 2. Database Schema & Entity Relationships
+## 2. Database Entities and Relationships
 
 ```mermaid
 erDiagram
@@ -55,6 +63,7 @@ erDiagram
     BOOKINGS {
         bigint id PK
         varchar booking_reference UK
+        varchar idempotency_key UK
         bigint hotel_id FK
         bigint room_type_id FK
         varchar guest_name
@@ -76,74 +85,98 @@ erDiagram
     }
 ```
 
-### Key Modeling Decisions
-- **Immutable Price Snapshots:** `bookings` stores `nights`, `price_per_night_snapshot`, `tax_amount_snapshot`, `total_amount_snapshot`, and `currency` at booking time. Updating `room_types.base_price_per_night` later will never alter historical bookings.
-- **No Trust in Client Pricing:** `CreateBookingRequest` does not accept any price or total fields; `PricingService` always computes prices on the backend.
-- **Status Lifecycle (`CONFIRMED` / `CANCELLED`):** Capacity is derived from active `CONFIRMED` bookings, so setting `status = CANCELLED` and `cancelled_at` atomically releases inventory without deleting audit history.
+### Key Indexes (Defined in `V1__create_schema.sql` & `V4__add_booking_idempotency_key.sql`)
+- `idx_hotels_city (city)` and `idx_hotels_city_rating (city, star_rating)`
+- `idx_room_types_hotel_guests (hotel_id, max_guests)`
+- `uk_bookings_reference (booking_reference)` and `uk_bookings_idempotency_key (idempotency_key)`
+- `idx_bookings_room_status_dates (room_type_id, status, check_in_date, check_out_date)`
+- `idx_bookings_ref_email (booking_reference, guest_email)`
+- `idx_bookings_hotel_status (hotel_id, status)`
 
 ---
 
-## 3. Database Indexing Strategy
+## 3. Main REST API Endpoints
 
-Defined in `V1__create_schema.sql`:
-
-| Table | Index Name | Columns | Purpose |
-|---|---|---|---|
-| `hotels` | `idx_hotels_city` | `(city)` | Accelerates city/location filtering |
-| `hotels` | `idx_hotels_city_rating` | `(city, star_rating)` | Optimizes filtered + star-rating sorted search |
-| `room_types` | `idx_room_types_hotel_guests` | `(hotel_id, max_guests)` | Fast lookup of hotel room types matching guest count |
-| `bookings` | `uk_bookings_reference` | `(booking_reference)` | Unique constraint + O(log N) lookup on booking reference |
-| `bookings` | `idx_bookings_room_status_dates` | `(room_type_id, status, check_in_date, check_out_date)` | Composite covering index for overlap capacity & 7-day alternative date scans |
-| `bookings` | `idx_bookings_ref_email` | `(booking_reference, guest_email)` | Direct index lookup for guest booking retrieval & cancellation |
-| `bookings` | `idx_bookings_hotel_status` | `(hotel_id, status)` | Supports hotel-level reporting and future analytics |
+- `GET /api/health` — Executes `SELECT 1` against HikariCP `DataSource` and reports `UP`/`CONNECTED` or `503` `DOWN`.
+- `GET /api/hotels` — Paginated, sorted search supporting `location`/`city`, `checkIn`, `checkOut`, `guests`, `page`, `size`, `sortBy`, `direction`, `sort`.
+- `GET /api/hotels/{id}` — Returns `HotelDetailResponse` (`404` if invalid ID).
+- `GET /api/hotels/{id}/availability` — Validates dates and returns `HotelAvailabilityResponse` with per-room availability and INR `PriceBreakdown`.
+- `GET /api/hotels/{id}/rooms` — Returns room categories with live availability and Smart Alternative Dates.
+- `GET /api/availability/alternatives` — Returns up to 3 alternative date ranges within the next 7 days.
+- `POST /api/bookings` — Creates a booking under pessimistic locking with `Idempotency-Key` support.
+- `GET /api/bookings/{reference}?email=` (and `/lookup`) — Retrieves booking by reference + case-insensitive email.
+- `PATCH /api/bookings/{reference}/cancel` (and `POST`) — Cancels `CONFIRMED` bookings and releases capacity.
 
 ---
 
-## 4. Core Date Overlap Rules
+## 4. Booking and Pricing Logic
 
-- **Check-in is inclusive**, **check-out is exclusive**: a stay occupies `[checkInDate, checkOutDate)`.
-- Two stays `[A_in, A_out)` and `[B_in, B_out)` overlap if and only if:
+1. **Zero Client Trust:** `CreateBookingRequest` carries no price fields. `PricingService` reads `RoomType.basePricePerNight` (`INR`) from MySQL.
+2. **Calculation:**
+   - `nights = ChronoUnit.DAYS.between(checkIn, checkOut)`
+   - `subtotal = basePricePerNight * nights` (scale 2, `HALF_UP`)
+   - `taxAmount = subtotal * 0.12` (12% GST, configurable via `APP_TAX_RATE`)
+   - `totalAmount = subtotal + taxAmount`
+3. **Immutable Snapshots:** `bookings` persists `price_per_night_snapshot`, `tax_amount_snapshot`, `total_amount_snapshot`, and `currency` so future tariff updates never mutate existing reservations.
+4. **Reference Generation:** `BookingReferenceGenerator` uses `SecureRandom` over an unambiguous 32-character alphabet (`HTL-XXXXXXXX`) backed by `uk_bookings_reference`.
+
+---
+
+## 5. Date Overlap Calculations
+
+- **Check-in is inclusive; check-out is exclusive:** A reservation occupies `[checkInDate, checkOutDate)`.
+- **Overlap predicate:**
   ```sql
-  A.check_in_date < B_out AND A.check_out_date > B_in
+  b.check_in_date < :requestedCheckOut
+  AND b.check_out_date > :requestedCheckIn
+  AND b.status = 'CONFIRMED'
   ```
-- **Back-to-back stays are allowed:** if Booking A ends on `2026-12-10` and Booking B starts on `2026-12-10`, `A_out > B_in` (`2026-12-10 > 2026-12-10`) evaluates to `false`, so no conflict is counted.
-- **Cancelled bookings release capacity:** all availability queries filter by `status = 'CONFIRMED'`.
+- **Back-to-back stays:** When Booking A ends on `2026-12-10` and Booking B starts on `2026-12-10`, `2026-12-10 > 2026-12-10` is `false`, so back-to-back stays are permitted.
+- **Cancellation release:** Setting `status = CANCELLED` excludes the row from `CONFIRMED` overlap counts, immediately restoring `availableRooms = totalRooms - overlappingConfirmed`.
 
 ---
 
-## 5. Booking Concurrency Strategy (Pessimistic Locking)
+## 6. Simultaneous Booking Protection
 
-A naive "check count, then insert" pattern suffers from a race condition (phantom overbooking): two concurrent transactions can both observe `overlapping = totalRooms - 1` and both insert a new `CONFIRMED` row.
-
-### Why Locking `bookings` Alone Is Not Enough
-Row locks on existing `bookings` rows do not stop two concurrent transactions from inserting *new* rows when zero or fewer than `totalRooms` rows exist.
-
-### Solution Implemented in `BookingService.createBooking`
-1. Annotate `createBooking` with `@Transactional` (`READ_COMMITTED` / InnoDB default).
-2. Acquire a **pessimistic write lock (`SELECT ... FOR UPDATE`)** on the parent `room_types` row via `RoomTypeRepository.findByIdWithHotelForUpdate(roomTypeId)` (`@Lock(LockModeType.PESSIMISTIC_WRITE)`).
-3. Because every booking for a given `room_type_id` must acquire the row lock on that `room_types` record in MySQL/InnoDB, concurrent requests for the **same room type** are strictly serialized at the database level (while bookings for different room types execute in parallel with zero contention).
-4. Inside the lock, `BookingService` re-counts overlapping `CONFIRMED` bookings. If `overlapping >= totalRooms`, it throws `RoomUnavailableException` (`409 Conflict`) and rolls back cleanly.
-5. As defense-in-depth, `bookings` includes `@Version` optimistic locking for concurrent updates to the same booking record, and `findByReferenceAndEmailForUpdate` locks the booking row during cancellation.
-
-Verified by `BookingPortalIntegrationTest.concurrentBookingsRespectRoomCapacityUnderPessimisticLock` (8 concurrent threads competing for `totalRooms = 2` -> exactly 2 `CONFIRMED`, 6 rejected with `RoomUnavailableException`).
+### Pessimistic Locking & InnoDB `READ_COMMITTED`
+1. `BookingService.createBookingWithIdempotency` and `cancelBooking` run inside `@Transactional(isolation = Isolation.READ_COMMITTED)`.
+2. **Why `READ_COMMITTED` + Lock-First Ordering Matters in MySQL/InnoDB:** MySQL/MariaDB defaults to `REPEATABLE_READ`, where any `SELECT` before acquiring a row lock pins an MVCC snapshot for the whole transaction; subsequent non-locking `COUNT(*)` reads would miss rows committed by earlier concurrent transactions. By acquiring `SELECT ... FOR UPDATE` on `room_types` **first** under `READ_COMMITTED`, every waiting thread reads the latest committed `bookings` rows immediately after acquiring the `RoomType` lock.
+3. **Consistent Lock Order:** Both `createBooking` and `cancelBooking` lock `RoomType` before accessing/locking `Booking`, preventing deadlocks.
+4. **Idempotency:** `Idempotency-Key` is checked inside the `RoomType` lock and enforced at the database level by `uk_bookings_idempotency_key`.
+5. **Verified on Real MySQL:** A 10-thread concurrent `POST /api/bookings` test against live MySQL/MariaDB (`localhost:3306`) on a `totalRooms = 1` suite produced **1** `201 Created` and **9** `409 Conflict`.
 
 ---
 
-## 6. Smart Alternative Dates Algorithm
+## 7. Design Alternatives and Trade-Offs
 
-When a room type fits `guests <= maxGuests` but has `availableRooms == 0` for `[checkIn, checkOut)` (`nights = checkOut - checkIn`):
-
-1. **Single-Query Window Scan:** Instead of running 7 separate queries, `AvailabilityService` executes **one** query (`findOverlappingBookingsInWindow`) across `[checkIn + 1, checkIn + 7 + nights)` for all sold-out eligible room types in the hotel.
-2. **Sliding Window Evaluation:** For `offset = 1..7`, it constructs `[checkIn + offset, checkIn + offset + nights)`, preserving the exact requested stay length.
-3. **Capacity Check & Pricing:** Using the in-memory list of confirmed bookings for that room type, it counts overlaps in `O(B)` and computes the backend `PriceBreakdown` whenever `totalRooms - overlapping > 0`.
-4. **Top-3 Cap:** Returns up to **3** earliest available windows, displayed as one-click suggestions in `HotelDetailComponent`.
+| Decision | Alternative | Trade-Off & Rationale |
+|---|---|---|
+| **Modular Monolith** | Microservices | Avoids distributed transactions / Saga complexity for tightly coupled inventory and booking state while preserving clean module boundaries. |
+| **Pessimistic Write Lock on `RoomType`** | Optimistic Locking (`@Version`) or Locking `bookings` rows | Optimistic locking fails with high retry rates under contention; locking `bookings` rows cannot prevent phantom inserts when `0` rows exist. Locking the parent `RoomType` serializes per-room-type contention cleanly in MySQL. |
+| **Derived Availability (`COUNT` on `bookings`)** | Pre-materialized `room_inventory_by_date` table | Derived queries eliminate drift between bookings and inventory tables and simplify cancellations; an indexed composite scan is fast at portal scale. |
 
 ---
 
-## 7. Scalability & Future Readiness
+## 8. Smart Alternative Dates Feature
 
-- **Stateless REST APIs:** Zero HTTP session state; any number of Spring Boot instances can sit behind a load balancer.
-- **Database-Backed Serialization:** Because `SELECT ... FOR UPDATE` lives in MySQL rather than in-JVM `synchronized` locks, concurrency safety holds across horizontally scaled application instances.
-- **Zero N+1 Read Paths:** `HotelService` and `RoomService` batch-fetch room types (`findByHotelIdIn`), overlapping counts (`GROUP BY room_type_id`), and alternative-date windows in constant query counts per request.
-- **HikariCP & `open-in-view: false`:** Bounded connection pool (`HotelBookingHikariPool`, default max 20) and disabled OSIV ensure DB connections are held only for the duration of active transactions.
-- **Redis Caching Readiness:** `HotelService.getHotelById`, `HotelRepository.findDistinctCities`, and `RoomType` metadata are pure read-mostly lookups cleanly isolated behind service boundaries, allowing `@Cacheable` / Redis cache-aside integration without altering controllers or entities.
+When a room type supports `guests <= maxGuests` but `availableRooms == 0`:
+1. `AvailabilityService.findAlternativeDateRanges` runs **one** batch query (`findOverlappingBookingsInWindow`) across `[checkIn + 1, checkIn + 7 + nights)` for all sold-out room types in the hotel.
+2. It evaluates `offset = 1..7` in memory, preserving `nights`, counting overlaps per window, computing backend INR `PriceBreakdown`, and returning up to **3** available ranges.
+
+---
+
+## 9. Scalability Approach
+
+- **Stateless REST APIs:** Enables horizontal scaling behind a load balancer; DB row locks serialize contention across all backend instances.
+- **Zero N+1 Read Paths:** `HotelService` and `RoomService` batch-fetch room types (`IN`), overlap counts (`GROUP BY`), and alternative windows.
+- **HikariCP & OSIV Disabled:** Bounded connection pool (`max=20`, `minIdle=5`) and `open-in-view=false`.
+- **Frontend Lazy Loading:** Angular routes (`hotel-search`, `hotel-detail`, `manage-booking`, `info-page`) load on demand.
+
+---
+
+## 10. Limitations and Future Improvements
+
+- Add Redis cache-aside for read-mostly hotel/city catalog queries (`@Cacheable`) when read volume grows.
+- Add guest authentication (OAuth2/OTP) and email notifications on confirmation/cancellation.
+- Add payment gateway integration (e.g., Razorpay/Stripe) with two-phase hold/expiration (`PENDING_PAYMENT` TTL).
+- Add pre-aggregated daily inventory counters if booking table volume scales into millions of active rows per property.

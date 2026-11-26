@@ -17,6 +17,7 @@ import com.hotelportal.pricing.service.PricingService;
 import com.hotelportal.room.entity.RoomType;
 import com.hotelportal.room.repository.RoomTypeRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
@@ -52,12 +53,12 @@ public class BookingService {
         this.referenceGenerator = referenceGenerator;
     }
 
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public BookingResponse createBooking(CreateBookingRequest request) {
         return createBookingWithIdempotency(request, request.idempotencyKey()).booking();
     }
 
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public BookingCreationResult createBookingWithIdempotency(CreateBookingRequest request, String idempotencyKeyHeader) {
         availabilityService.validateDateRange(request.checkInDate(), request.checkOutDate());
 
@@ -68,29 +69,26 @@ public class BookingService {
                         : request.idempotencyKey()
         );
 
-        if (normalizedIdempotencyKey != null) {
-            Optional<Booking> existing = bookingRepository.findByIdempotencyKeyWithDetails(normalizedIdempotencyKey);
-            if (existing.isPresent()) {
-                return verifyAndReplay(existing.get(), request, normalizedEmail);
-            }
-        }
-
-        if (request.hotelId() != null && !hotelRepository.existsById(request.hotelId())) {
-            throw new ResourceNotFoundException("Hotel not found with id: " + request.hotelId());
-        }
-
-        // Acquire pessimistic write lock (SELECT ... FOR UPDATE) on the RoomType row
-        // to serialize concurrent bookings for the same room type and prevent phantom overbooking.
+        // Acquire pessimistic write lock (SELECT ... FOR UPDATE) on the RoomType row first
+        // under READ_COMMITTED so subsequent overlap and idempotency checks always see latest committed rows.
         RoomType roomType = roomTypeRepository.findByIdWithHotelForUpdate(request.roomTypeId())
-                .orElseThrow(() -> new ResourceNotFoundException("Room type not found with id: " + request.roomTypeId()));
+                .orElseThrow(() -> {
+                    if (request.hotelId() != null && !hotelRepository.existsById(request.hotelId())) {
+                        return new ResourceNotFoundException("Hotel not found with id: " + request.hotelId());
+                    }
+                    return new ResourceNotFoundException("Room type not found with id: " + request.roomTypeId());
+                });
 
         if (request.hotelId() != null && !roomType.getHotel().getId().equals(request.hotelId())) {
+            if (!hotelRepository.existsById(request.hotelId())) {
+                throw new ResourceNotFoundException("Hotel not found with id: " + request.hotelId());
+            }
             throw new BadRequestException(
                     "Room type " + request.roomTypeId() + " does not belong to hotel " + request.hotelId()
             );
         }
 
-        // Re-check idempotency inside the RoomType lock to guard against concurrent duplicate clicks.
+        // Check idempotency inside the RoomType lock to guard against concurrent duplicate clicks.
         if (normalizedIdempotencyKey != null) {
             Optional<Booking> existingUnderLock = bookingRepository.findByIdempotencyKeyWithDetails(normalizedIdempotencyKey);
             if (existingUnderLock.isPresent()) {
@@ -166,7 +164,7 @@ public class BookingService {
         return BookingResponse.from(booking);
     }
 
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public BookingResponse cancelBooking(String reference, CancelBookingRequest request) {
         String normalizedRef = normalizeReference(reference);
         String normalizedEmail = normalizeEmail(request.email());
