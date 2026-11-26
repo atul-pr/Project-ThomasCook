@@ -4,26 +4,6 @@
 
 ---
 
-## Screenshots
-
-| Homepage & Hero Search | Hotel Listing |
-|---|---|
-| ![Homepage](docs/screenshots/homepage.png) | ![Hotel Listing](docs/screenshots/hotel-listing.png) |
-
-| Hotel Details & Room Categories | Reactive Booking Form |
-|---|---|
-| ![Hotel Details](docs/screenshots/hotel-details.png) | ![Booking Form](docs/screenshots/booking-form.png) |
-
-| Booking Confirmation | Smart Alternative Dates |
-|---|---|
-| ![Booking Confirmation](docs/screenshots/booking-confirmation.png) | ![Smart Alternative Dates](docs/screenshots/smart-alternative-dates.png) |
-
-| Manage Booking | Cancellation & Capacity Release |
-|---|---|
-| ![Manage Booking](docs/screenshots/manage-booking.png) | ![Cancellation](docs/screenshots/cancellation.png) |
-
----
-
 ## Key Features
 
 - **5 Curated Indian Hotels & 11 Room Categories:** Seeded automatically via Flyway across Mumbai, Goa, Jaipur, Bengaluru, and New Delhi.
@@ -160,23 +140,5 @@ npm test -- --watch=false --browsers=ChromeHeadless
 
 When a room category fits the requested guest count (`guests <= maxGuests`) but has `0` available rooms for `[checkIn, checkOut)`, `AvailabilityService` executes a **single batch query** (`findOverlappingBookingsInWindow`) across `[checkIn + 1, checkIn + 7 + nights)`, evaluates sliding windows for the next 7 days preserving the exact number of nights, and returns up to **3** available date ranges with backend-calculated INR totals. Clicking any suggestion in the Angular UI updates the dates and opens the booking form immediately.
 
----
 
-## Approximate Development Time
 
-- **~6 hours** end-to-end (architecture & schema setup, Spring Boot modular monolith + pessimistic locking, Angular 19 UI + editorial redesign, Smart Alternative Dates, automated tests, live MySQL concurrency verification, and documentation).
-
----
-
-## Known Limitations
-
-- **No Authentication / Accounts:** Guest retrieval relies on possession of the unique `HTL-XXXXXXXX` reference plus matching email rather than user accounts or JWT sessions.
-- **No Payment Gateway:** Bookings confirm immediately with immutable price snapshots; payment capture is out of scope.
-- **Static Seed Inventory:** Hotel and room catalog management relies on Flyway migrations rather than an admin CRUD portal.
-- **No Distributed Cache:** Currently reads directly from MySQL via HikariCP; Redis cache-aside is deferred until read traffic warrants it.
-
----
-
-## AI Assistance Disclosure
-
-AI coding assistance (Google Antigravity) was used during development to accelerate boilerplate scaffolding, Flyway migration drafting, Angular component styling, and test generation. All architectural decisions, concurrency testing against live MySQL (`REPEATABLE_READ` vs `READ_COMMITTED` discovery), and end-to-end verification were reviewed and validated in the workspace.
