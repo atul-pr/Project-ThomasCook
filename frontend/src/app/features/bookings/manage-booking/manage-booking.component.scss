@@ -17,7 +17,17 @@
   display: grid;
   grid-template-columns: 1fr 1.2fr auto;
   gap: 0.75rem;
-  align-items: end;
+  align-items: start;
+}
+
+.lookup-action {
+  padding-top: 1.48rem;
+}
+
+.field-error {
+  color: #b91c1c;
+  font-size: 0.8rem;
+  font-weight: 600;
 }
 
 .success-banner {
@@ -41,7 +51,6 @@
   padding-bottom: 1rem;
   border-bottom: 1px solid #e2e8f0;
   margin-bottom: 1rem;
-
   h2 {
     margin: 0.15rem 0 0;
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -60,12 +69,10 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1.5rem;
-
   h4 {
     margin: 0 0 0.6rem;
     color: #0f172a;
   }
-
   p {
     margin: 0.35rem 0;
     font-size: 0.94rem;
@@ -102,17 +109,61 @@
   font-size: 0.83rem;
 }
 
-.footer-actions,
-.confirm-inline {
+.footer-actions {
   display: flex;
   align-items: center;
   gap: 0.6rem;
   flex-wrap: wrap;
 }
 
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 21, 41, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 60;
+}
+
+.modal-dialog {
+  max-width: 460px;
+  width: 100%;
+  padding: 1.5rem;
+  box-shadow: var(--shadow-lg);
+  h3 {
+    margin: 0 0 0.6rem;
+  }
+  p {
+    margin: 0 0 0.75rem;
+    color: #334155;
+    font-size: 0.94rem;
+  }
+}
+
+.modal-note {
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  color: #9a3412 !important;
+  padding: 0.65rem 0.85rem;
+  border-radius: 8px;
+  font-size: 0.86rem !important;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.65rem;
+  margin-top: 1rem;
+}
+
 @media (max-width: 760px) {
   .lookup-grid,
   .detail-grid {
     grid-template-columns: 1fr;
+  }
+  .lookup-action {
+    padding-top: 0;
   }
 }

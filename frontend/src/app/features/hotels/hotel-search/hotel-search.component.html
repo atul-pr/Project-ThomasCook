@@ -1,24 +1,24 @@
 <section class="hero-banner" id="search-panel">
   <div class="hero-overlay">
     <div class="hero-copy">
-      <span class="hero-eyebrow">Curated Stays Across India</span>
-      <h1>Discover iconic hotels with transparent INR pricing</h1>
+      <span class="hero-eyebrow">Editorial Collection · India</span>
+      <h1>Timeless stays crafted for unforgettable journeys</h1>
       <p>
-        From heritage waterfront palaces in Mumbai to coastal villas in Goa—check real-time
-        room availability and lock in instant confirmation.
+        Explore heritage waterfront palaces, sunlit coastal villas, and refined urban retreats
+        with live room availability and transparent INR pricing.
       </p>
     </div>
 
     <form class="search-card" (ngSubmit)="onSearch()">
       <div class="search-grid">
         <div class="field">
-          <label for="city">Destination / City</label>
+          <label for="city">Destination</label>
           <input
             id="city"
             name="city"
             type="text"
             [(ngModel)]="city"
-            placeholder="Where are you heading?"
+            placeholder="Mumbai, Goa, Jaipur..."
           />
         </div>
 
@@ -57,10 +57,11 @@
 
         <div class="field">
           <label for="sortBy">Sort by</label>
-          <select id="sortBy" name="sortBy" [(ngModel)]="sortBy" (ngModelChange)="onSearch()">
-            <option value="starRating">Star Rating</option>
-            <option value="name">Hotel Name</option>
-            <option value="city">City</option>
+          <select id="sortBy" name="sortOption" [(ngModel)]="sortOption" (ngModelChange)="onSearch()">
+            <option value="starRating,desc">Star Rating (High → Low)</option>
+            <option value="starRating,asc">Star Rating (Low → High)</option>
+            <option value="name,asc">Hotel Name (A → Z)</option>
+            <option value="city,asc">City (A → Z)</option>
           </select>
         </div>
 
@@ -70,125 +71,248 @@
           </button>
         </div>
       </div>
-
-      @if (cities.length > 0) {
-        <div class="city-chips">
-          <span class="chip-label">Popular destinations:</span>
-          @for (c of cities; track c) {
-            <button
-              type="button"
-              class="chip-btn"
-              [class.active]="city.toLowerCase() === c.toLowerCase()"
-              (click)="selectCity(c)"
-            >
-              {{ c }}
-            </button>
-          }
-          @if (city) {
-            <button type="button" class="chip-clear" (click)="city = ''; onSearch()">
-              Clear filter
-            </button>
-          }
-        </div>
-      }
     </form>
   </div>
 </section>
 
-<app-error-banner [message]="errorMessage"></app-error-banner>
-
-@if (loading && !hotelPage) {
-  <div class="card empty-state">Finding available stays across India...</div>
-} @else if (hotelPage && hotelPage.content.length === 0) {
-  <div class="card empty-state">
-    <h3>No hotels matched "{{ city }}"</h3>
-    <p class="muted">Try clearing your destination filter or exploring another city.</p>
-    <button type="button" class="btn btn-secondary" (click)="city = ''; onSearch()">Show All Hotels</button>
-  </div>
-} @else if (hotelPage) {
-  <div class="results-header">
+<!-- Travel Categories -->
+<section class="editorial-section">
+  <div class="section-head">
     <div>
-      <h2>Handpicked Stays</h2>
-      <p class="muted">
-        Showing {{ hotelPage.content.length }} of {{ hotelPage.totalElements }} properties
-        @if (city) { in <strong>{{ city }}</strong> }
-      </p>
+      <span class="section-kicker">Travel Styles</span>
+      <h2>Curated by How You Travel</h2>
     </div>
-    <span class="page-pill">Page {{ hotelPage.page + 1 }} of {{ hotelPage.totalPages || 1 }}</span>
-  </div>
-
-  <div class="hotel-grid">
-    @for (hotel of hotelPage.content; track hotel.id) {
-      <article class="card hotel-card">
-        <div class="hotel-photo-wrap" (click)="viewHotel(hotel.id)">
-          <img
-            [src]="hotel.imageUrl || '/assets/images/hotel-mumbai.jpg'"
-            [alt]="hotel.name + ' in ' + hotel.city"
-            class="hotel-photo"
-          />
-          <div class="photo-badges">
-            <span class="city-pill">{{ hotel.city }}</span>
-            <span class="rating-pill">{{ hotel.starRating }} ★</span>
-          </div>
-        </div>
-
-        <div class="hotel-body">
-          <div class="hotel-top">
-            <h3>{{ hotel.name }}</h3>
-            <p class="location">{{ hotel.address }}, {{ hotel.city }}</p>
-          </div>
-
-          <p class="description">{{ hotel.description }}</p>
-
-          <div class="amenity-list">
-            @for (amenity of hotel.amenities.slice(0, 4); track amenity) {
-              <span class="amenity-chip">{{ amenity }}</span>
-            }
-          </div>
-
-          @if (hotel.totalAvailableRooms !== null) {
-            <div class="avail-row">
-              <span
-                class="badge"
-                [class.badge-success]="hotel.totalAvailableRooms > 0"
-                [class.badge-danger]="hotel.totalAvailableRooms === 0"
-              >
-                {{
-                  hotel.totalAvailableRooms > 0
-                    ? hotel.totalAvailableRooms + ' room(s) open for ' + guests + ' guest(s)'
-                    : 'No rooms available for selected dates'
-                }}
-              </span>
-            </div>
-          }
-
-          <div class="hotel-footer">
-            <div class="price-block">
-              <span class="from-label">Starting from</span>
-              <div class="price-line">
-                <strong>{{ hotel.startingPricePerNight | currency: hotel.currency : 'symbol' : '1.0-0' }}</strong>
-                <span>/ night</span>
-              </div>
-            </div>
-
-            <button type="button" class="btn btn-primary" (click)="viewHotel(hotel.id)">
-              View Details
-            </button>
-          </div>
-        </div>
-      </article>
+    @if (city || activeCategory !== 'all') {
+      <button type="button" class="btn btn-secondary reset-btn" (click)="applyCategory('all')">
+        Reset Filters
+      </button>
     }
   </div>
 
-  @if (hotelPage.totalPages > 1) {
-    <div class="pagination-bar">
-      <button type="button" class="btn btn-secondary" [disabled]="hotelPage.first" (click)="changePage(-1)">
-        ← Previous
+  <div class="category-strip">
+    @for (cat of travelCategories; track cat.id) {
+      <button
+        type="button"
+        class="category-pill"
+        [class.active]="activeCategory === cat.id"
+        (click)="applyCategory(cat.id)"
+      >
+        <strong>{{ cat.label }}</strong>
+        <span>{{ cat.subtitle }}</span>
       </button>
-      <span class="muted">Page {{ hotelPage.page + 1 }} of {{ hotelPage.totalPages }}</span>
-      <button type="button" class="btn btn-secondary" [disabled]="hotelPage.last" (click)="changePage(1)">
-        Next →
-      </button>
+    }
+  </div>
+</section>
+
+<!-- Popular Destinations -->
+@if (allHotels.length > 0) {
+  <section class="editorial-section">
+    <div class="section-head">
+      <div>
+        <span class="section-kicker">Discover Destinations</span>
+        <h2>Iconic Indian Cities</h2>
+      </div>
     </div>
+
+    <div class="dest-grid">
+      @for (dest of allHotels; track dest.id) {
+        <button
+          type="button"
+          class="dest-card"
+          [class.active]="city.toLowerCase() === dest.city.toLowerCase()"
+          (click)="selectDestination(dest.city)"
+        >
+          <img
+            [src]="dest.imageUrl || '/assets/images/hotel-mumbai.jpg'"
+            [alt]="dest.city + ' — ' + dest.name"
+          />
+          <div class="dest-overlay">
+            <span class="dest-city">{{ dest.city }}</span>
+            <span class="dest-price">From {{ dest.startingPricePerNight | currency: dest.currency : 'symbol' : '1.0-0' }}</span>
+          </div>
+        </button>
+      }
+    </div>
+  </section>
+}
+
+<app-error-banner [message]="errorMessage"></app-error-banner>
+
+<!-- Featured Hotels -->
+<section class="editorial-section" id="featured-hotels">
+  <div class="section-head">
+    <div>
+      <span class="section-kicker">Featured Properties</span>
+      <h2>
+        @if (city) {
+          Stays in {{ city }}
+        } @else {
+          Featured Hotels Across India
+        }
+      </h2>
+    </div>
+    @if (hotelPage) {
+      <span class="page-pill">
+        Showing {{ hotelPage.content.length }} of {{ hotelPage.totalElements }} properties
+      </span>
+    }
+  </div>
+
+  @if (loading && !hotelPage) {
+    <div class="card empty-state">Curating available properties...</div>
+  } @else if (hotelPage && hotelPage.content.length === 0) {
+    <div class="card empty-state">
+      <h3>No properties matched "{{ city }}"</h3>
+      <p class="muted">Clear your destination filter to browse all StayAtlas properties.</p>
+      <button type="button" class="btn btn-secondary" (click)="applyCategory('all')">Show All Hotels</button>
+    </div>
+  } @else if (hotelPage) {
+    <div class="hotel-grid">
+      @for (hotel of hotelPage.content; track hotel.id) {
+        <article class="card hotel-card">
+          <div class="hotel-photo-wrap" (click)="viewHotel(hotel.id)">
+            <img
+              [src]="hotel.imageUrl || '/assets/images/hotel-mumbai.jpg'"
+              [alt]="hotel.name + ' in ' + hotel.city"
+              class="hotel-photo"
+            />
+            <div class="photo-badges">
+              <span class="city-pill">{{ hotel.city }}</span>
+              <span class="rating-pill">{{ hotel.starRating }} ★</span>
+            </div>
+          </div>
+
+          <div class="hotel-body">
+            <div class="hotel-top">
+              <h3>{{ hotel.name }}</h3>
+              <p class="location">{{ hotel.address }}, {{ hotel.city }}</p>
+            </div>
+
+            <p class="description">{{ hotel.description }}</p>
+
+            <div class="amenity-list">
+              @for (amenity of hotel.amenities.slice(0, 4); track amenity) {
+                <span class="amenity-chip">{{ amenity }}</span>
+              }
+            </div>
+
+            @if (hotel.totalAvailableRooms !== null) {
+              <div>
+                <span
+                  class="badge"
+                  [class.badge-success]="hotel.totalAvailableRooms > 0"
+                  [class.badge-danger]="hotel.totalAvailableRooms === 0"
+                >
+                  {{
+                    hotel.totalAvailableRooms > 0
+                      ? hotel.totalAvailableRooms + ' room(s) available for ' + guests + ' guest(s)'
+                      : 'Sold out for selected dates'
+                  }}
+                </span>
+              </div>
+            }
+
+            <div class="hotel-footer">
+              <div class="price-block">
+                <span class="from-label">From</span>
+                <div class="price-line">
+                  <strong>{{ hotel.startingPricePerNight | currency: hotel.currency : 'symbol' : '1.0-0' }}</strong>
+                  <span>/ night</span>
+                </div>
+              </div>
+
+              <div class="card-ctas">
+                <button type="button" class="btn btn-secondary" (click)="viewHotel(hotel.id)">
+                  View Hotel
+                </button>
+                <button type="button" class="btn btn-primary" (click)="viewHotel(hotel.id)">
+                  Book Now
+                </button>
+              </div>
+            </div>
+          </div>
+        </article>
+      }
+    </div>
+
+    @if (hotelPage.totalPages > 1) {
+      <div class="pagination-bar">
+        <button type="button" class="btn btn-secondary" [disabled]="hotelPage.first" (click)="changePage(-1)">
+          ← Previous
+        </button>
+        <span class="muted">Page {{ hotelPage.page + 1 }} of {{ hotelPage.totalPages }}</span>
+        <button type="button" class="btn btn-secondary" [disabled]="hotelPage.last" (click)="changePage(1)">
+          Next →
+        </button>
+      </div>
+    }
   }
+</section>
+
+<!-- Recommended Stays (5-Star Collection) -->
+@if (recommendedHotels.length > 0) {
+  <section class="editorial-section">
+    <div class="section-head">
+      <div>
+        <span class="section-kicker">Editor's Selection</span>
+        <h2>Recommended 5-Star Stays</h2>
+      </div>
+    </div>
+
+    <div class="rec-grid">
+      @for (rec of recommendedHotels; track rec.id) {
+        <article class="card rec-card" (click)="viewHotel(rec.id)">
+          <img [src]="rec.imageUrl || '/assets/images/hotel-mumbai.jpg'" [alt]="rec.name" />
+          <div class="rec-body">
+            <span class="rec-city">{{ rec.city }} · {{ rec.starRating }} ★</span>
+            <h3>{{ rec.name }}</h3>
+            <p class="muted">{{ rec.startingPricePerNight | currency: rec.currency : 'symbol' : '1.0-0' }} / night</p>
+          </div>
+        </article>
+      }
+    </div>
+  </section>
+}
+
+<!-- Quick Property Comparison -->
+@if (allHotels.length > 0) {
+  <section class="editorial-section">
+    <div class="section-head">
+      <div>
+        <span class="section-kicker">At a Glance</span>
+        <h2>Compare Properties</h2>
+      </div>
+    </div>
+
+    <div class="card compare-wrap">
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th>Hotel</th>
+            <th>Destination</th>
+            <th>Rating</th>
+            <th>Room Categories</th>
+            <th>Starting Rate</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of allHotels; track item.id) {
+            <tr>
+              <td><strong>{{ item.name }}</strong></td>
+              <td>{{ item.city }}</td>
+              <td>{{ item.starRating }} ★</td>
+              <td>{{ item.matchingRoomTypesCount }} categories</td>
+              <td><strong>{{ item.startingPricePerNight | currency: item.currency : 'symbol' : '1.0-0' }}</strong> / night</td>
+              <td class="compare-action">
+                <button type="button" class="btn btn-secondary btn-sm" (click)="viewHotel(item.id)">
+                  View
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
 }

@@ -3,29 +3,33 @@
   <p class="muted">Retrieve your reservation details using your unique booking reference and email address.</p>
 </section>
 
-<form class="card lookup-card" (ngSubmit)="lookup()">
+<form class="card lookup-card" [formGroup]="lookupForm" (ngSubmit)="lookup()" novalidate>
   <div class="lookup-grid">
     <div class="field">
       <label for="reference">Booking Reference</label>
       <input
         id="reference"
-        name="reference"
         type="text"
-        [(ngModel)]="reference"
+        formControlName="reference"
         placeholder="e.g. HTL-7K9P2M4Q"
-        required
       />
+      @if (lookupForm.controls.reference.touched && lookupForm.controls.reference.invalid) {
+        <span class="field-error">Booking reference is required.</span>
+      }
     </div>
     <div class="field">
       <label for="email">Guest Email</label>
       <input
         id="email"
-        name="email"
         type="email"
-        [(ngModel)]="email"
+        formControlName="email"
         placeholder="you@example.com"
-        required
       />
+      @if (lookupForm.controls.email.touched && lookupForm.controls.email.errors) {
+        <span class="field-error">
+          {{ lookupForm.controls.email.errors['required'] ? 'Guest email is required.' : 'Please enter a valid email address.' }}
+        </span>
+      }
     </div>
     <div class="lookup-action">
       <button type="submit" class="btn btn-primary" [disabled]="loading">
@@ -99,23 +103,42 @@
         <a [routerLink]="['/hotels', booking.hotelId]" class="btn btn-secondary">View Hotel</a>
 
         @if (booking.status === 'CONFIRMED') {
-          @if (!confirmCancelOpen) {
-            <button type="button" class="btn btn-danger" (click)="confirmCancelOpen = true">
-              Cancel Booking
-            </button>
-          } @else {
-            <div class="confirm-inline">
-              <span>Cancel and release room?</span>
-              <button type="button" class="btn btn-danger" [disabled]="cancelling" (click)="confirmCancellation()">
-                {{ cancelling ? 'Cancelling...' : 'Yes, Cancel' }}
-              </button>
-              <button type="button" class="btn btn-secondary" [disabled]="cancelling" (click)="confirmCancelOpen = false">
-                Keep Booking
-              </button>
-            </div>
-          }
+          <button type="button" class="btn btn-danger" (click)="openCancelDialog()">
+            Cancel Booking
+          </button>
         }
       </div>
     </div>
   </article>
+}
+
+@if (cancelDialogOpen && booking) {
+  <div class="modal-backdrop" (click)="closeCancelDialog()">
+    <div
+      class="card modal-dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="cancel-dialog-title"
+      (click)="$event.stopPropagation()"
+    >
+      <h3 id="cancel-dialog-title">Confirm Booking Cancellation</h3>
+      <p>
+        Are you sure you want to cancel reservation
+        <strong>{{ booking.bookingReference }}</strong> at
+        <strong>{{ booking.hotelName }}</strong>?
+      </p>
+      <p class="modal-note">
+        Cancelling this reservation marks it as <strong>CANCELLED</strong> and immediately
+        releases the room availability for other guests.
+      </p>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" [disabled]="cancelling" (click)="closeCancelDialog()">
+          Keep Booking
+        </button>
+        <button type="button" class="btn btn-danger" [disabled]="cancelling" (click)="confirmCancellation()">
+          {{ cancelling ? 'Cancelling...' : 'Confirm Cancellation' }}
+        </button>
+      </div>
+    </div>
+  </div>
 }

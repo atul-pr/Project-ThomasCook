@@ -10,35 +10,40 @@ import { RouterLink } from '@angular/router';
       <div class="container footer-grid">
         <div class="footer-brand">
           <a routerLink="/hotels" class="footer-logo">
-            <span class="logo-dot"></span>
+            <span class="logo-monogram">S</span>
             <strong>StayAtlas</strong>
           </a>
           <p class="footer-about">
-            StayAtlas curates verified heritage palaces, coastal resorts, and metropolitan business
-            hotels across India with transparent INR pricing, real-time room inventory, and instant
-            booking confirmation.
+            An editorial collection of heritage palaces, coastal resorts, and metropolitan business
+            hotels across India—backed by live room inventory, transparent INR pricing, and instant
+            confirmation.
           </p>
         </div>
 
         <div class="footer-col">
-          <h4>Platform</h4>
+          <h4>Explore Destinations</h4>
           <ul>
-            <li><a routerLink="/hotels">Explore Hotels</a></li>
-            <li><a routerLink="/manage-booking">Manage Booking</a></li>
-            <li><a routerLink="/about">About StayAtlas</a></li>
+            <li><a [routerLink]="['/hotels']" [queryParams]="{ city: 'Mumbai' }">Mumbai</a></li>
+            <li><a [routerLink]="['/hotels']" [queryParams]="{ city: 'Goa' }">Goa</a></li>
+            <li><a [routerLink]="['/hotels']" [queryParams]="{ city: 'Jaipur' }">Jaipur</a></li>
+            <li><a [routerLink]="['/hotels']" [queryParams]="{ city: 'Bengaluru' }">Bengaluru</a></li>
+            <li><a [routerLink]="['/hotels']" [queryParams]="{ city: 'New Delhi' }">New Delhi</a></li>
           </ul>
         </div>
 
         <div class="footer-col">
-          <h4>Legal</h4>
+          <h4>Guest Services</h4>
           <ul>
+            <li><a routerLink="/hotels">Explore All Hotels</a></li>
+            <li><a routerLink="/manage-booking">Manage Booking</a></li>
+            <li><a routerLink="/about">About StayAtlas</a></li>
             <li><a routerLink="/privacy">Privacy Policy</a></li>
             <li><a routerLink="/terms">Terms &amp; Conditions</a></li>
           </ul>
         </div>
 
         <div class="footer-col">
-          <h4>Guest Concierge</h4>
+          <h4>Concierge</h4>
           <ul class="contact-list">
             <li><a href="mailto:concierge@stayatlas.in">concierge&#64;stayatlas.in</a></li>
             <li><a href="tel:+912248902100">+91 22 4890 2100</a></li>
@@ -50,54 +55,60 @@ import { RouterLink } from '@angular/router';
       <div class="footer-bottom">
         <div class="container bottom-inner">
           <span>© 2026 StayAtlas Hospitality Pvt. Ltd. All rights reserved.</span>
-          <span>All prices displayed in Indian Rupees (INR ₹) · Taxes calculated transparently</span>
+          <span>All rates in Indian Rupees (INR ₹) · Authoritative backend pricing</span>
         </div>
       </div>
     </footer>
   `,
   styles: [`
     .site-footer {
-      background: #081529;
-      color: #cbd5e1;
+      background: #111827;
+      color: #d4d4d8;
       margin-top: auto;
-      border-top: 1px solid #132f57;
+      border-top: 1px solid #1f2937;
     }
     .footer-grid {
       display: grid;
-      grid-template-columns: 1.7fr 1fr 1fr 1.2fr;
-      gap: 2.25rem;
-      padding: 3rem 1.25rem 2.5rem;
+      grid-template-columns: 1.7fr 1fr 1fr 1.15fr;
+      gap: 2.5rem;
+      padding: 3.5rem 1.5rem 2.75rem;
     }
     .footer-logo {
       display: inline-flex;
       align-items: center;
-      gap: 0.55rem;
+      gap: 0.65rem;
       color: #ffffff;
       text-decoration: none;
-      font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
-      font-size: 1.25rem;
-      margin-bottom: 0.8rem;
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 1.3rem;
+      margin-bottom: 0.9rem;
     }
-    .logo-dot {
-      width: 11px;
-      height: 11px;
-      border-radius: 3px;
-      background: #3b82f6;
-      display: inline-block;
+    .logo-monogram {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px;
+      height: 30px;
+      border-radius: 7px;
+      background: #9a5b13;
+      color: #ffffff;
+      font-size: 1rem;
+      font-weight: 700;
     }
     .footer-about {
       margin: 0;
       font-size: 0.88rem;
-      line-height: 1.65;
-      color: #94a3b8;
+      line-height: 1.7;
+      color: #9ca3af;
       max-width: 360px;
     }
     .footer-col h4 {
-      color: #ffffff;
-      font-size: 0.9rem;
+      color: #faf8f5;
+      font-size: 0.82rem;
       font-weight: 700;
-      margin: 0 0 0.85rem;
-      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin: 0 0 1rem;
     }
     .footer-col ul {
       list-style: none;
@@ -105,11 +116,11 @@ import { RouterLink } from '@angular/router';
       margin: 0;
       display: flex;
       flex-direction: column;
-      gap: 0.55rem;
+      gap: 0.58rem;
       font-size: 0.88rem;
     }
     .footer-col a {
-      color: #94a3b8;
+      color: #9ca3af;
       text-decoration: none;
       transition: color 0.15s;
 
@@ -118,11 +129,11 @@ import { RouterLink } from '@angular/router';
       }
     }
     .contact-list li {
-      color: #94a3b8;
+      color: #9ca3af;
     }
     .footer-bottom {
       border-top: 1px solid rgba(255, 255, 255, 0.08);
-      background: #061020;
+      background: #0b0f19;
     }
     .bottom-inner {
       display: flex;
@@ -130,9 +141,9 @@ import { RouterLink } from '@angular/router';
       align-items: center;
       flex-wrap: wrap;
       gap: 0.75rem;
-      padding: 1rem 1.25rem;
+      padding: 1.1rem 1.5rem;
       font-size: 0.8rem;
-      color: #64748b;
+      color: #6b7280;
     }
     @media (max-width: 900px) {
       .footer-grid {

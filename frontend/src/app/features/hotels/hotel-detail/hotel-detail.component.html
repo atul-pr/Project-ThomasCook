@@ -61,25 +61,34 @@
     <div class="conf-head">
       <div>
         <span class="badge badge-success">{{ confirmedBooking.status }}</span>
-        <h2>Reservation Confirmed!</h2>
+        <h2>Booking Confirmed!</h2>
       </div>
       <div class="ref-box">
         <span class="muted">Booking Reference</span>
-        <strong>{{ confirmedBooking.bookingReference }}</strong>
+        <div class="ref-copy-row">
+          <strong>{{ confirmedBooking.bookingReference }}</strong>
+          <button
+            type="button"
+            class="copy-btn"
+            (click)="copyReference(confirmedBooking.bookingReference)"
+          >
+            {{ copiedReference ? 'Copied ✓' : 'Copy' }}
+          </button>
+        </div>
       </div>
     </div>
-    <p>
-      Reserved <strong>{{ confirmedBooking.roomTypeName }}</strong> at
-      <strong>{{ confirmedBooking.hotelName }}</strong> from
-      <strong>{{ confirmedBooking.checkInDate }}</strong> to
-      <strong>{{ confirmedBooking.checkOutDate }}</strong>
-      ({{ confirmedBooking.nights }} night{{ confirmedBooking.nights > 1 ? 's' : '' }}).
-    </p>
-    <p>
-      Snapshot Total:
-      <strong>{{ confirmedBooking.totalAmountSnapshot | currency: confirmedBooking.currency : 'symbol' : '1.0-2' }}</strong>
-      · Guest email: <strong>{{ confirmedBooking.guestEmail }}</strong>
-    </p>
+
+    <div class="conf-grid">
+      <p><strong>Hotel:</strong> {{ confirmedBooking.hotelName }} ({{ confirmedBooking.hotelCity }})</p>
+      <p><strong>Room Category:</strong> {{ confirmedBooking.roomTypeName }}</p>
+      <p><strong>Guest Name:</strong> {{ confirmedBooking.guestName }}</p>
+      <p><strong>Email:</strong> {{ confirmedBooking.guestEmail }}</p>
+      <p><strong>Check-in:</strong> {{ confirmedBooking.checkInDate }}</p>
+      <p><strong>Check-out:</strong> {{ confirmedBooking.checkOutDate }} ({{ confirmedBooking.nights }} night{{ confirmedBooking.nights > 1 ? 's' : '' }})</p>
+      <p><strong>Rate / night:</strong> {{ confirmedBooking.pricePerNightSnapshot | currency: confirmedBooking.currency : 'symbol' : '1.0-0' }}</p>
+      <p><strong>Total Amount:</strong> <strong>{{ confirmedBooking.totalAmountSnapshot | currency: confirmedBooking.currency : 'symbol' : '1.0-2' }}</strong></p>
+    </div>
+
     <div class="conf-actions">
       <a
         routerLink="/manage-booking"
@@ -169,36 +178,78 @@
 </section>
 
 @if (selectedRoom) {
-  <section class="card booking-form-card">
+  <section class="card booking-form-card" id="booking-form-section">
     <div class="form-header">
       <div>
         <h2>Complete Your Reservation</h2>
         <p class="muted">
-          {{ selectedRoom.name }} · {{ checkIn }} to {{ checkOut }} · {{ guests }} guest(s)
+          {{ hotel?.name }} · {{ selectedRoom.name }} · {{ guests }} guest(s)
         </p>
       </div>
       <button type="button" class="btn btn-secondary" (click)="cancelSelection()">Close</button>
     </div>
 
     <div class="booking-layout">
-      <form (ngSubmit)="submitBooking()" class="guest-form">
+      <form [formGroup]="bookingForm" (ngSubmit)="submitBooking()" class="guest-form" novalidate>
         <div class="field">
           <label for="guestName">Full Name *</label>
-          <input id="guestName" name="guestName" type="text" [(ngModel)]="guestName" required />
+          <input id="guestName" type="text" formControlName="guestName" placeholder="e.g. Atul Prajapati" />
+          @if (bookingForm.controls.guestName.touched && bookingForm.controls.guestName.invalid) {
+            <span class="field-error">Guest full name is required.</span>
+          }
         </div>
+
         <div class="field">
           <label for="guestEmail">Email Address *</label>
-          <input id="guestEmail" name="guestEmail" type="email" [(ngModel)]="guestEmail" required />
+          <input id="guestEmail" type="email" formControlName="guestEmail" placeholder="you@example.com" />
+          @if (bookingForm.controls.guestEmail.touched && bookingForm.controls.guestEmail.errors) {
+            <span class="field-error">
+              {{ bookingForm.controls.guestEmail.errors['required'] ? 'Email address is required.' : 'Please enter a valid email address.' }}
+            </span>
+          }
         </div>
+
+        <div class="form-dates-row">
+          <div class="field">
+            <label for="formCheckIn">Check-in Date *</label>
+            <input
+              id="formCheckIn"
+              type="date"
+              [min]="minDate"
+              formControlName="checkIn"
+              (change)="onBookingFormDateChange()"
+            />
+          </div>
+          <div class="field">
+            <label for="formCheckOut">Check-out Date *</label>
+            <input
+              id="formCheckOut"
+              type="date"
+              [min]="bookingForm.controls.checkIn.value || minDate"
+              formControlName="checkOut"
+              (change)="onBookingFormDateChange()"
+            />
+          </div>
+        </div>
+        @if ((bookingForm.controls.checkIn.touched || bookingForm.controls.checkOut.touched) && bookingForm.errors?.['dateRange']) {
+          <span class="field-error">{{ bookingForm.errors?.['dateRange'] }}</span>
+        }
+
         <div class="field">
-          <label for="guestPhone">Phone Number</label>
-          <input id="guestPhone" name="guestPhone" type="tel" [(ngModel)]="guestPhone" placeholder="+91 98765 43210" />
+          <label for="guestPhone">Phone Number (Optional)</label>
+          <input id="guestPhone" type="tel" formControlName="guestPhone" placeholder="+91 98765 43210" />
         </div>
+
         <div class="field">
-          <label for="specialRequests">Special Requests</label>
-          <textarea id="specialRequests" name="specialRequests" rows="2" [(ngModel)]="specialRequests"></textarea>
+          <label for="specialRequests">Special Requests (Optional)</label>
+          <textarea id="specialRequests" rows="2" formControlName="specialRequests"></textarea>
         </div>
-        <button type="submit" class="btn btn-primary" [disabled]="submittingBooking">
+
+        <button
+          type="submit"
+          class="btn btn-primary"
+          [disabled]="submittingBooking || loadingRooms"
+        >
           {{ submittingBooking ? 'Confirming Reservation...' : 'Confirm Booking' }}
         </button>
       </form>
@@ -207,7 +258,7 @@
         <h4>Backend Price Summary</h4>
         <app-price-summary [price]="selectedRoom.priceBreakdown"></app-price-summary>
         <p class="snapshot-note muted">
-          All charges in INR (₹) are calculated server-side and stored as an immutable booking snapshot.
+          All charges in INR (₹) are calculated by the Spring Boot backend and stored as an immutable booking snapshot.
         </p>
       </div>
     </div>

@@ -1,6 +1,7 @@
 export type BookingStatus = 'CONFIRMED' | 'CANCELLED';
 
 export interface CreateBookingRequest {
+  hotelId?: number;
   roomTypeId: number;
   guestName: string;
   guestEmail: string;
