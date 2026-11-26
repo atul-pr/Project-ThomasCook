@@ -9,6 +9,12 @@
   box-shadow: var(--shadow-md);
 }
 
+.conf-badge-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .conf-head {
   display: flex;
   justify-content: space-between;
@@ -71,8 +77,14 @@
 .conf-block {
   background: var(--surface-card);
   border: 1px solid var(--border-hairline);
-  border-radius: 12px;
-  padding: 1.15rem;
+  border-radius: 14px;
+  padding: 1.2rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    border-color: var(--border-hover);
+    box-shadow: var(--shadow-sm);
+  }
 
   h3 {
     margin: 0 0 0.65rem;

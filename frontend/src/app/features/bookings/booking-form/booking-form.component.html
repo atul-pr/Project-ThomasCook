@@ -8,7 +8,12 @@
 <app-error-banner [message]="errorMessage"></app-error-banner>
 
 @if ((loadingHotel || loadingRoom) && !selectedRoom) {
-  <div class="card panel">Loading room details and live INR pricing...</div>
+  <div class="card skeleton-card" aria-busy="true" aria-label="Loading booking form and pricing">
+    <div class="skeleton-line tall"></div>
+    <div class="skeleton-line short"></div>
+    <div class="skeleton-line medium"></div>
+    <div class="skeleton-line medium"></div>
+  </div>
 } @else if (hotel && selectedRoom) {
   <section class="card booking-form-card">
     <div class="form-header">

@@ -68,14 +68,16 @@
   display: grid;
   grid-template-columns: 1.55fr 1fr;
   gap: 1.4rem;
-  padding: 1.35rem;
-  transition: box-shadow 0.2s, border-color 0.2s, background-color 0.2s;
+  padding: 1.45rem;
+  transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.22s ease, border-color 0.22s ease, background-color 0.22s ease;
   &:hover {
+    transform: translateY(-2px);
+    border-color: var(--border-hover);
     box-shadow: var(--shadow-md);
   }
   &.room-highlighted {
-    border-color: var(--blue-500);
-    box-shadow: var(--shadow-md);
+    border-color: var(--blue-border);
+    box-shadow: 0 0 0 3px var(--blue-ring), var(--shadow-md);
   }
 }
 

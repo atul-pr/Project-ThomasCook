@@ -11,6 +11,7 @@ import {
   validateDateRange
 } from '../../../core/utils/date.util';
 import { ErrorBannerComponent } from '../../../shared/components/error-banner/error-banner.component';
+import { RevealDirective } from '../../../shared/directives/reveal.directive';
 
 export type TravelCategoryId =
   | 'all'
@@ -29,7 +30,7 @@ interface TravelCategory {
 @Component({
   selector: 'app-hotel-search',
   standalone: true,
-  imports: [FormsModule, CurrencyPipe, ErrorBannerComponent],
+  imports: [FormsModule, CurrencyPipe, ErrorBannerComponent, RevealDirective],
   templateUrl: './hotel-search.component.html',
   styleUrl: './hotel-search.component.scss'
 })

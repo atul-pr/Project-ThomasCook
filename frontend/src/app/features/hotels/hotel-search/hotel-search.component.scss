@@ -1,6 +1,7 @@
 .hero-banner {
-  border-radius: 22px;
+  border-radius: 20px;
   overflow: hidden;
+  border: 1px solid var(--border-hairline);
   background: url('/assets/images/hero-stayatlas.jpg') center/cover no-repeat;
   margin-bottom: 2.75rem;
   box-shadow: var(--shadow-lg);
@@ -44,22 +45,23 @@
 
 .search-card {
   background: var(--search-card-bg);
-  border: 1px solid var(--border-hairline);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border-input);
   border-radius: 16px;
   padding: 1.2rem 1.3rem;
-  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.28);
+  box-shadow: var(--shadow-lg);
 }
 
 .search-grid {
   display: grid;
-  grid-template-columns: 1.5fr 1fr 1fr 0.85fr 1fr auto;
+  grid-template-columns: 1.25fr 0.92fr 0.92fr 0.78fr 1.25fr auto;
   gap: 0.75rem;
   align-items: end;
 }
 
 .search-btn {
-  height: 43px;
-  padding: 0 1.45rem;
+  height: 44px;
+  padding: 0 1.35rem;
   white-space: nowrap;
 }
 
@@ -73,10 +75,10 @@
   text-align: left;
   background: var(--surface-card);
   border: 1px solid var(--border-hairline);
-  border-radius: 12px;
+  border-radius: 14px;
   padding: 0.85rem 1rem;
   cursor: pointer;
-  transition: all 0.16s ease;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
 
   strong {
     display: block;
@@ -90,13 +92,15 @@
   }
 
   &:hover {
-    border-color: var(--ink-950);
+    border-color: var(--border-hover);
+    box-shadow: var(--shadow-sm);
     transform: translateY(-2px);
   }
 
   &.active {
-    background: var(--btn-primary-bg);
-    border-color: var(--btn-primary-bg);
+    background: var(--btn-primary-gradient);
+    border-color: var(--blue-border);
+    box-shadow: 0 0 0 3px var(--blue-ring), var(--shadow-sm);
 
     strong, span {
       color: #ffffff;
@@ -124,10 +128,11 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  transition: transform 0.2s, box-shadow 0.2s, background-color 0.2s;
+  transition: transform 0.24s ease, box-shadow 0.24s ease, border-color 0.2s ease, background-color 0.2s ease;
 
   &:hover {
     transform: translateY(-4px);
+    border-color: var(--border-hover);
     box-shadow: var(--shadow-md);
   }
 }
@@ -144,11 +149,11 @@
   height: 100%;
   object-fit: cover;
   display: block;
-  transition: transform 0.35s;
+  transition: transform 0.42s ease;
 }
 
 .hotel-card:hover .hotel-photo {
-  transform: scale(1.04);
+  transform: scale(1.05);
 }
 
 .photo-badges {
@@ -158,22 +163,18 @@
   justify-content: space-between;
 }
 
-.city-pill {
-  background: rgba(15, 23, 42, 0.84);
+.city-pill,
+.rating-pill {
+  background: rgba(15, 23, 42, 0.86);
   color: #ffffff;
-  font-size: 0.75rem;
+  font-size: 0.76rem;
   font-weight: 700;
-  padding: 0.25rem 0.7rem;
+  padding: 0.25rem 0.68rem;
   border-radius: 999px;
 }
 
 .rating-pill {
-  background: rgba(15, 23, 42, 0.88);
   color: #fbbf24;
-  font-weight: 700;
-  font-size: 0.78rem;
-  padding: 0.25rem 0.65rem;
-  border-radius: 999px;
 }
 
 .hotel-body {

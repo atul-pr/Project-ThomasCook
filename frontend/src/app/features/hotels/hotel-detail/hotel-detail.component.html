@@ -7,7 +7,12 @@
 <app-error-banner [message]="errorMessage"></app-error-banner>
 
 @if (loadingHotel) {
-  <div class="card panel">Loading property details...</div>
+  <div class="card skeleton-card" aria-busy="true" aria-label="Loading hotel details">
+    <div class="skeleton-box"></div>
+    <div class="skeleton-line tall"></div>
+    <div class="skeleton-line short"></div>
+    <div class="skeleton-line medium"></div>
+  </div>
 } @else if (hotel) {
   <section class="card hotel-hero">
     <img
@@ -39,7 +44,7 @@
     </div>
   </section>
 
-  <section class="rooms-section">
+  <section class="rooms-section" appReveal>
     <div class="section-head">
       <div>
         <span class="section-kicker">Accommodations</span>
@@ -55,7 +60,11 @@
     </div>
 
     @if (loadingRooms && rooms.length === 0) {
-      <div class="card panel">Loading room categories...</div>
+      <div class="card skeleton-card" aria-busy="true">
+        <div class="skeleton-line tall"></div>
+        <div class="skeleton-line medium"></div>
+        <div class="skeleton-line short"></div>
+      </div>
     } @else {
       <div class="room-list">
         @for (room of rooms; track room.id) {

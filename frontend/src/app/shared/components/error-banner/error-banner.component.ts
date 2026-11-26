@@ -15,10 +15,12 @@ import { Component, Input } from '@angular/core';
       background: var(--error-bg);
       border: 1px solid var(--error-border);
       color: var(--error-text);
-      padding: 0.85rem 1rem;
-      border-radius: 8px;
+      padding: 0.85rem 1.05rem;
+      border-radius: 12px;
       margin-bottom: 1rem;
       font-size: 0.95rem;
+      box-shadow: var(--shadow-sm);
+      animation: sa-error-in 0.24s ease;
     }
   `]
 })

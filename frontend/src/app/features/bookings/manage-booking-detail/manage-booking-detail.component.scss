@@ -6,10 +6,11 @@
   background: var(--success-bg);
   border: 1px solid var(--success-border);
   color: var(--success-text);
-  padding: 0.85rem 1rem;
-  border-radius: 8px;
+  padding: 0.85rem 1.05rem;
+  border-radius: 12px;
   margin-bottom: 1rem;
   font-weight: 500;
+  box-shadow: var(--shadow-sm);
 }
 
 .booking-card {

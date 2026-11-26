@@ -68,6 +68,7 @@ import { ThemeService } from '../../../core/services/theme.service';
           <button
             type="button"
             class="hamburger"
+            [class.open]="mobileMenuOpen"
             [attr.aria-expanded]="mobileMenuOpen"
             aria-label="Toggle navigation menu"
             (click)="toggleMenu()"
@@ -148,6 +149,10 @@ import { ThemeService } from '../../../core/services/theme.service';
       text-decoration: none;
       color: var(--ink-950);
     }
+    .brand:hover .brand-mark {
+      transform: translateY(-1px) scale(1.03);
+      box-shadow: var(--shadow-sm);
+    }
     .brand-mark {
       display: inline-flex;
       align-items: center;
@@ -155,11 +160,12 @@ import { ThemeService } from '../../../core/services/theme.service';
       width: 38px;
       height: 38px;
       border-radius: 10px;
-      background: var(--btn-primary-bg);
+      background: var(--btn-primary-gradient);
       color: #ffffff;
-      font-family: Georgia, 'Times New Roman', serif;
+      font-family: Georgia, serif;
       font-size: 1.2rem;
       font-weight: 700;
+      transition: transform 0.18s ease, box-shadow 0.18s ease;
     }
     .brand-text {
       display: flex;
@@ -192,17 +198,20 @@ import { ThemeService } from '../../../core/services/theme.service';
       text-decoration: none;
       font-weight: 500;
       font-size: 0.93rem;
-      padding: 0.5rem 0.9rem;
+      padding: 0.48rem 0.92rem;
       border-radius: 999px;
-      transition: background-color 0.15s, color 0.15s;
+      border: 1px solid transparent;
+      transition: background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
     }
     .nav-desktop a:hover {
       color: var(--ink-950);
       background: var(--surface-muted);
+      border-color: var(--border-hairline);
     }
     .nav-desktop a.active {
       color: var(--ink-950);
       background: var(--surface-hover);
+      border-color: var(--border-hairline);
       font-weight: 600;
     }
     .nav-actions {
@@ -273,12 +282,28 @@ import { ThemeService } from '../../../core/services/theme.service';
         height: 2px;
         background: var(--ink-950);
         border-radius: 2px;
+        transition: transform 0.2s ease, opacity 0.2s ease;
+      }
+
+      &.open span:nth-child(1) {
+        transform: translateY(7px) rotate(45deg);
+      }
+      &.open span:nth-child(2) {
+        opacity: 0;
+      }
+      &.open span:nth-child(3) {
+        transform: translateY(-7px) rotate(-45deg);
       }
     }
     .nav-mobile {
       border-top: 1px solid var(--border-hairline);
       background: var(--ivory-bg);
       padding: 0.9rem 0 1.2rem;
+      animation: nav-drop 0.2s ease;
+    }
+    @keyframes nav-drop {
+      from { opacity: 0; transform: translateY(-6px); }
+      to { opacity: 1; transform: translateY(0); }
     }
     .mobile-links {
       display: flex;

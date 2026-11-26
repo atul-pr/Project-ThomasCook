@@ -7,18 +7,32 @@
 <app-error-banner [message]="errorMessage"></app-error-banner>
 
 @if (loading) {
-  <div class="card panel">Loading your booking confirmation...</div>
+  <div class="card skeleton-card" aria-busy="true" aria-label="Loading booking confirmation">
+    <div class="skeleton-line tall"></div>
+    <div class="skeleton-line short"></div>
+    <div class="skeleton-line medium"></div>
+    <div class="skeleton-line medium"></div>
+  </div>
 } @else if (booking) {
-  <section class="card confirmation-card" role="status">
+  <section class="card confirmation-card sa-confirm-enter" role="status">
     <div class="conf-head">
       <div>
-        <span
-          class="badge"
-          [class.badge-success]="booking.status === 'CONFIRMED'"
-          [class.badge-danger]="booking.status === 'CANCELLED'"
-        >
-          {{ booking.status }}
-        </span>
+        <div class="conf-badge-row">
+          @if (booking.status === 'CONFIRMED') {
+            <span class="sa-check-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            </span>
+          }
+          <span
+            class="badge"
+            [class.badge-success]="booking.status === 'CONFIRMED'"
+            [class.badge-danger]="booking.status === 'CANCELLED'"
+          >
+            {{ booking.status }}
+          </span>
+        </div>
         <h1>{{ booking.status === 'CONFIRMED' ? 'Booking Confirmed!' : 'Reservation Cancelled' }}</h1>
         <p class="muted">
           Keep your booking reference handy to view details or cancel your stay at any time.

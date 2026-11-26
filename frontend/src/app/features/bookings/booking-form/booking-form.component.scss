@@ -3,8 +3,9 @@
 }
 
 .booking-form-card {
-  padding: 1.65rem;
-  box-shadow: var(--shadow-md);
+  padding: 1.75rem;
+  border-color: var(--blue-border);
+  box-shadow: 0 0 0 3px var(--blue-ring), var(--shadow-md);
 }
 
 .form-header {
@@ -111,9 +112,9 @@
 
 .room-snapshot {
   background: var(--surface-elevated);
-  border: 1px solid var(--border-hairline);
-  border-radius: 10px;
-  padding: 1rem;
+  border: 1px solid var(--blue-border);
+  border-radius: 14px;
+  padding: 1.05rem 1.15rem;
   margin-bottom: 1.1rem;
 
   h3 {

@@ -8,7 +8,11 @@
 <app-error-banner [message]="errorMessage"></app-error-banner>
 
 @if (loadingHotel) {
-  <div class="card panel">Loading property availability...</div>
+  <div class="card skeleton-card" aria-busy="true" aria-label="Loading property availability">
+    <div class="skeleton-line tall"></div>
+    <div class="skeleton-line short"></div>
+    <div class="skeleton-line medium"></div>
+  </div>
 } @else if (hotel && hotelId) {
   <section class="card summary-strip">
     <img
@@ -64,7 +68,15 @@
     </div>
 
     @if (loadingRooms && rooms.length === 0) {
-      <div class="card panel">Checking live room availability...</div>
+      <div class="room-list" aria-busy="true" aria-label="Checking live room availability">
+        @for (s of [1, 2]; track s) {
+          <div class="card skeleton-card">
+            <div class="skeleton-line tall"></div>
+            <div class="skeleton-line medium"></div>
+            <div class="skeleton-line short"></div>
+          </div>
+        }
+      </div>
     } @else {
       <div class="room-list">
         @for (room of rooms; track room.id) {

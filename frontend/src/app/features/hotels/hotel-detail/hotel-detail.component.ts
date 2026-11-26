@@ -15,11 +15,12 @@ import {
   BreadcrumbItem
 } from '../../../shared/components/breadcrumb/breadcrumb.component';
 import { ErrorBannerComponent } from '../../../shared/components/error-banner/error-banner.component';
+import { RevealDirective } from '../../../shared/directives/reveal.directive';
 
 @Component({
   selector: 'app-hotel-detail',
   standalone: true,
-  imports: [CurrencyPipe, RouterLink, BreadcrumbComponent, ErrorBannerComponent],
+  imports: [CurrencyPipe, RouterLink, BreadcrumbComponent, ErrorBannerComponent, RevealDirective],
   templateUrl: './hotel-detail.component.html',
   styleUrl: './hotel-detail.component.scss'
 })

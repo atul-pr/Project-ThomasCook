@@ -76,7 +76,7 @@
 </section>
 
 <!-- Travel Categories -->
-<section class="editorial-section">
+<section class="editorial-section" appReveal>
   <div class="section-head">
     <div>
       <span class="section-kicker">Travel Styles</span>
@@ -106,7 +106,7 @@
 
 <!-- Popular Destinations -->
 @if (allHotels.length > 0) {
-  <section class="editorial-section">
+  <section class="editorial-section" appReveal>
     <div class="section-head">
       <div>
         <span class="section-kicker">Discover Destinations</span>
@@ -139,7 +139,7 @@
 <app-error-banner [message]="errorMessage"></app-error-banner>
 
 <!-- Featured Hotels -->
-<section class="editorial-section" id="featured-hotels">
+<section class="editorial-section" id="featured-hotels" appReveal>
   <div class="section-head">
     <div>
       <span class="section-kicker">Featured Properties</span>
@@ -159,7 +159,16 @@
   </div>
 
   @if (loading && !hotelPage) {
-    <div class="card empty-state">Curating available properties...</div>
+    <div class="skeleton-grid" aria-busy="true" aria-label="Loading available hotels">
+      @for (s of [1, 2, 3]; track s) {
+        <div class="card skeleton-card">
+          <div class="skeleton-box"></div>
+          <div class="skeleton-line tall"></div>
+          <div class="skeleton-line short"></div>
+          <div class="skeleton-line medium"></div>
+        </div>
+      }
+    </div>
   } @else if (hotelPage && hotelPage.content.length === 0) {
     <div class="card empty-state">
       <h3>No properties matched "{{ city }}"</h3>
@@ -251,7 +260,7 @@
 
 <!-- Recommended Stays (5-Star Collection) -->
 @if (recommendedHotels.length > 0) {
-  <section class="editorial-section">
+  <section class="editorial-section" appReveal>
     <div class="section-head">
       <div>
         <span class="section-kicker">Editor's Selection</span>
@@ -276,7 +285,7 @@
 
 <!-- Quick Property Comparison -->
 @if (allHotels.length > 0) {
-  <section class="editorial-section">
+  <section class="editorial-section" appReveal>
     <div class="section-head">
       <div>
         <span class="section-kicker">At a Glance</span>
