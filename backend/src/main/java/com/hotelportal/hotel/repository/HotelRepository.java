@@ -4,12 +4,13 @@ import com.hotelportal.hotel.entity.Hotel;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
-public interface HotelRepository extends JpaRepository<Hotel, Long> {
+public interface HotelRepository extends JpaRepository<Hotel, Long>, JpaSpecificationExecutor<Hotel> {
 
     @Query("""
             SELECT h FROM Hotel h
@@ -22,4 +23,7 @@ public interface HotelRepository extends JpaRepository<Hotel, Long> {
 
     @Query("SELECT DISTINCT h.city FROM Hotel h ORDER BY h.city ASC")
     List<String> findDistinctCities();
+
+    @Query("SELECT h.amenities FROM Hotel h")
+    List<String> findAllAmenityCsvs();
 }

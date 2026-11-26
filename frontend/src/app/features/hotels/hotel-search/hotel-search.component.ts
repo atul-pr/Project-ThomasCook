@@ -12,6 +12,10 @@ import {
 } from '../../../core/utils/date.util';
 import { ErrorBannerComponent } from '../../../shared/components/error-banner/error-banner.component';
 import { RevealDirective } from '../../../shared/directives/reveal.directive';
+import {
+  AppliedHotelFilters,
+  HotelFilterPanelComponent
+} from '../hotel-filter-panel/hotel-filter-panel.component';
 
 export type TravelCategoryId =
   | 'all'
@@ -30,7 +34,13 @@ interface TravelCategory {
 @Component({
   selector: 'app-hotel-search',
   standalone: true,
-  imports: [FormsModule, CurrencyPipe, ErrorBannerComponent, RevealDirective],
+  imports: [
+    FormsModule,
+    CurrencyPipe,
+    ErrorBannerComponent,
+    RevealDirective,
+    HotelFilterPanelComponent
+  ],
   templateUrl: './hotel-search.component.html',
   styleUrl: './hotel-search.component.scss'
 })
@@ -59,6 +69,16 @@ export class HotelSearchComponent implements OnInit {
   page = 0;
   readonly pageSize = 5;
 
+  minPrice: number | null = null;
+  maxPrice: number | null = null;
+  minRating: number | null = null;
+  selectedAmenities: string[] = [];
+
+  sliderMin = 0;
+  sliderMax = 35000;
+  availableAmenities: string[] = [];
+  mobileFiltersOpen = false;
+
   cities: string[] = [];
   allHotels: HotelSummary[] = [];
   hotelPage: PageResponse<HotelSummary> | null = null;
@@ -69,9 +89,54 @@ export class HotelSearchComponent implements OnInit {
     return this.allHotels.filter((h) => h.starRating >= 5).slice(0, 3);
   }
 
+  get hasActiveFilters(): boolean {
+    return (
+      !!this.city.trim() ||
+      this.minPrice !== null ||
+      this.maxPrice !== null ||
+      this.minRating !== null ||
+      this.selectedAmenities.length > 0 ||
+      this.activeCategory !== 'all'
+    );
+  }
+
+  get activeFilterCount(): number {
+    let count = 0;
+    if (this.city.trim()) count++;
+    if (this.minPrice !== null || this.maxPrice !== null) count++;
+    if (this.minRating !== null) count++;
+    count += this.selectedAmenities.length;
+    return count;
+  }
+
+  get activePriceLabel(): string | null {
+    if (this.minPrice === null && this.maxPrice === null) {
+      return null;
+    }
+    const fmt = (n: number) => `₹${n.toLocaleString('en-IN')}`;
+    if (this.minPrice !== null && this.maxPrice !== null) {
+      return `Price: ${fmt(this.minPrice)} – ${fmt(this.maxPrice)}`;
+    }
+    if (this.minPrice !== null) {
+      return `Price: From ${fmt(this.minPrice)}`;
+    }
+    return `Price: Up to ${fmt(this.maxPrice as number)}`;
+  }
+
   ngOnInit(): void {
     this.hotelApi.getCities().subscribe({
       next: (cities) => (this.cities = cities),
+      error: () => {}
+    });
+
+    this.hotelApi.getFilterMetadata().subscribe({
+      next: (meta) => {
+        this.availableAmenities = meta.amenities ?? [];
+        const maxDb = Number(meta.maxPricePerNight ?? 0);
+        if (!Number.isNaN(maxDb) && maxDb > 0) {
+          this.sliderMax = Math.max(25000, Math.ceil(maxDb / 1000) * 1000);
+        }
+      },
       error: () => {}
     });
 
@@ -84,11 +149,21 @@ export class HotelSearchComponent implements OnInit {
 
     this.route.queryParamMap.subscribe((params) => {
       const qCity = params.get('city');
+      const qMin = params.get('minPrice');
+      const qMax = params.get('maxPrice');
+      const qRating = params.get('minRating');
+      const qAmenities = params.getAll('amenities');
+
       if (qCity !== null) {
         this.city = qCity;
         this.activeCategory = 'all';
-        this.page = 0;
       }
+      this.minPrice = this.parseOptionalNumber(qMin);
+      this.maxPrice = this.parseOptionalNumber(qMax);
+      this.minRating = this.parseOptionalNumber(qRating);
+      this.selectedAmenities = qAmenities.filter((a) => !!a.trim());
+      this.page = 0;
+
       this.loadHotels();
     });
   }
@@ -96,6 +171,63 @@ export class HotelSearchComponent implements OnInit {
   onSearch(): void {
     this.activeCategory = 'all';
     this.page = 0;
+    this.syncQueryParams();
+    this.loadHotels();
+  }
+
+  applyPanelFilters(filters: AppliedHotelFilters): void {
+    this.minPrice = filters.minPrice;
+    this.maxPrice = filters.maxPrice;
+    this.minRating = filters.minRating;
+    this.selectedAmenities = [...filters.amenities];
+    this.activeCategory = 'all';
+    this.page = 0;
+    this.mobileFiltersOpen = false;
+    this.syncQueryParams();
+    this.loadHotels();
+  }
+
+  clearPriceFilter(): void {
+    this.minPrice = null;
+    this.maxPrice = null;
+    this.page = 0;
+    this.syncQueryParams();
+    this.loadHotels();
+  }
+
+  clearRatingFilter(): void {
+    this.minRating = null;
+    this.page = 0;
+    this.syncQueryParams();
+    this.loadHotels();
+  }
+
+  clearCityFilter(): void {
+    this.city = '';
+    this.page = 0;
+    this.syncQueryParams();
+    this.loadHotels();
+  }
+
+  removeAmenityFilter(amenity: string): void {
+    this.selectedAmenities = this.selectedAmenities.filter((a) => a !== amenity);
+    this.page = 0;
+    this.syncQueryParams();
+    this.loadHotels();
+  }
+
+  clearAllFilters(): void {
+    this.activeCategory = 'all';
+    this.city = '';
+    this.guests = 2;
+    this.minPrice = null;
+    this.maxPrice = null;
+    this.minRating = null;
+    this.selectedAmenities = [];
+    this.sortOption = 'starRating,desc';
+    this.page = 0;
+    this.mobileFiltersOpen = false;
+    this.syncQueryParams();
     this.loadHotels();
   }
 
@@ -107,35 +239,45 @@ export class HotelSearchComponent implements OnInit {
       case 'all':
         this.city = '';
         this.guests = 2;
+        this.minPrice = null;
+        this.maxPrice = null;
+        this.minRating = null;
+        this.selectedAmenities = [];
         this.sortOption = 'starRating,desc';
         break;
       case 'family':
         this.city = '';
         this.guests = 4;
+        this.minRating = null;
         this.sortOption = 'starRating,desc';
         break;
       case 'business':
         this.city = 'Bengaluru';
         this.guests = 1;
+        this.minRating = null;
         this.sortOption = 'starRating,desc';
         break;
       case 'couples':
         this.city = '';
         this.guests = 2;
+        this.minRating = null;
         this.sortOption = 'starRating,desc';
         break;
       case 'beach':
         this.city = 'Goa';
         this.guests = 2;
+        this.minRating = null;
         this.sortOption = 'starRating,desc';
         break;
       case 'luxury':
         this.city = '';
         this.guests = 2;
+        this.minRating = 5;
         this.sortOption = 'starRating,desc';
         break;
     }
 
+    this.syncQueryParams();
     this.loadHotels();
   }
 
@@ -143,6 +285,7 @@ export class HotelSearchComponent implements OnInit {
     this.city = this.city.toLowerCase() === cityName.toLowerCase() ? '' : cityName;
     this.activeCategory = 'all';
     this.page = 0;
+    this.syncQueryParams();
     this.loadHotels();
     if (typeof document !== 'undefined') {
       document.getElementById('featured-hotels')?.scrollIntoView({ behavior: 'smooth' });
@@ -181,6 +324,14 @@ export class HotelSearchComponent implements OnInit {
     });
   }
 
+  openMobileFilters(): void {
+    this.mobileFiltersOpen = true;
+  }
+
+  closeMobileFilters(): void {
+    this.mobileFiltersOpen = false;
+  }
+
   loadHotels(): void {
     const dateError = validateDateRange(this.checkIn, this.checkOut);
     if (dateError) {
@@ -200,6 +351,10 @@ export class HotelSearchComponent implements OnInit {
         checkIn: this.checkIn,
         checkOut: this.checkOut,
         guests: this.guests,
+        minPrice: this.minPrice,
+        maxPrice: this.maxPrice,
+        minRating: this.minRating,
+        amenities: this.selectedAmenities,
         page: this.page,
         size: this.pageSize,
         sortBy,
@@ -215,5 +370,27 @@ export class HotelSearchComponent implements OnInit {
           this.loading = false;
         }
       });
+  }
+
+  private syncQueryParams(): void {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: {
+        city: this.city.trim() || null,
+        minPrice: this.minPrice ?? null,
+        maxPrice: this.maxPrice ?? null,
+        minRating: this.minRating ?? null,
+        amenities: this.selectedAmenities.length ? this.selectedAmenities : null
+      },
+      replaceUrl: true
+    });
+  }
+
+  private parseOptionalNumber(raw: string | null): number | null {
+    if (raw === null || raw.trim() === '') {
+      return null;
+    }
+    const parsed = Number(raw);
+    return !Number.isNaN(parsed) && parsed >= 0 ? parsed : null;
   }
 }

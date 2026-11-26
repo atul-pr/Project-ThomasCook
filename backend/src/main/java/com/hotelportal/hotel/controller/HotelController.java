@@ -3,6 +3,7 @@ package com.hotelportal.hotel.controller;
 import com.hotelportal.availability.dto.HotelAvailabilityResponse;
 import com.hotelportal.common.dto.PageResponse;
 import com.hotelportal.hotel.dto.HotelDetailResponse;
+import com.hotelportal.hotel.dto.HotelFilterMetadataResponse;
 import com.hotelportal.hotel.dto.HotelSummaryResponse;
 import com.hotelportal.hotel.service.HotelService;
 import com.hotelportal.room.service.RoomService;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -35,6 +37,11 @@ public class HotelController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate checkIn,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate checkOut,
             @RequestParam(defaultValue = "1") int guests,
+            @RequestParam(required = false) BigDecimal minPrice,
+            @RequestParam(required = false) BigDecimal maxPrice,
+            @RequestParam(required = false) Integer minRating,
+            @RequestParam(required = false) Integer rating,
+            @RequestParam(required = false) List<String> amenities,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "starRating") String sortBy,
@@ -42,6 +49,7 @@ public class HotelController {
             @RequestParam(required = false) String sort
     ) {
         String effectiveLocation = (location != null && !location.isBlank()) ? location : city;
+        Integer effectiveMinRating = minRating != null ? minRating : rating;
         String effectiveSortBy = sortBy;
         String effectiveDirection = direction;
         if (sort != null && !sort.isBlank()) {
@@ -56,6 +64,10 @@ public class HotelController {
                 checkIn,
                 checkOut,
                 guests,
+                minPrice,
+                maxPrice,
+                effectiveMinRating,
+                amenities,
                 page,
                 size,
                 effectiveSortBy,
@@ -66,6 +78,11 @@ public class HotelController {
     @GetMapping("/cities")
     public List<String> getAvailableCities() {
         return hotelService.getAvailableCities();
+    }
+
+    @GetMapping("/filter-metadata")
+    public HotelFilterMetadataResponse getFilterMetadata() {
+        return hotelService.getFilterMetadata();
     }
 
     @GetMapping("/{hotelId}")

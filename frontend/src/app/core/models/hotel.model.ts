@@ -63,6 +63,13 @@ export interface AlternativeDateSuggestion {
   priceBreakdown: PriceBreakdown;
 }
 
+export interface HotelFilterMetadata {
+  minPricePerNight: number;
+  maxPricePerNight: number;
+  currency: string;
+  amenities: string[];
+}
+
 export interface RoomType {
   id: number;
   hotelId: number;

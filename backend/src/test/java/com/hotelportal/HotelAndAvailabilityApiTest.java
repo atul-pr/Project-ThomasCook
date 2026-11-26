@@ -160,4 +160,98 @@ class HotelAndAvailabilityApiTest {
                 .andExpect(jsonPath("$.rooms[2].id").value(3))
                 .andExpect(jsonPath("$.rooms[2].availableRooms").value(1));
     }
+
+    @Test
+    void filtersHotelsByMinMaxPriceRatingsAmenitiesLocationDatesAndPagination() throws Exception {
+        LocalDate checkIn = LocalDate.now().plusDays(10);
+        LocalDate checkOut = checkIn.plusDays(2);
+
+        // Dynamic filter metadata backed by DB
+        mockMvc.perform(get("/api/hotels/filter-metadata"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.currency").value("INR"))
+                .andExpect(jsonPath("$.minPricePerNight").value(5800.0))
+                .andExpect(jsonPath("$.maxPricePerNight").value(32000.0))
+                .andExpect(jsonPath("$.amenities").isArray());
+
+        // Min-only filter
+        mockMvc.perform(get("/api/hotels")
+                        .param("minPrice", "15000")
+                        .param("guests", "2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(3));
+
+        // Max-only filter (boundary inclusive at 8500 for Goa)
+        mockMvc.perform(get("/api/hotels")
+                        .param("maxPrice", "8500")
+                        .param("guests", "2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(4));
+
+        // Min + Max combined
+        mockMvc.perform(get("/api/hotels")
+                        .param("minPrice", "6000")
+                        .param("maxPrice", "9000")
+                        .param("guests", "2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(3));
+
+        // Exact boundary match
+        mockMvc.perform(get("/api/hotels")
+                        .param("minPrice", "8500")
+                        .param("maxPrice", "8500")
+                        .param("guests", "2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].name").value("Azure Bay Resort Goa"))
+                .andExpect(jsonPath("$.content[0].startingPricePerNight").value(8500.0));
+
+        // Empty results (Under 2000)
+        mockMvc.perform(get("/api/hotels")
+                        .param("maxPrice", "2000")
+                        .param("guests", "2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(0))
+                .andExpect(jsonPath("$.content.length()").value(0));
+
+        // Combined price + rating + amenities + dates + pagination
+        mockMvc.perform(get("/api/hotels")
+                        .param("minPrice", "5000")
+                        .param("maxPrice", "20000")
+                        .param("minRating", "5")
+                        .param("amenities", "Pool")
+                        .param("guests", "2")
+                        .param("checkIn", checkIn.toString())
+                        .param("checkOut", checkOut.toString())
+                        .param("page", "0")
+                        .param("size", "1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(2))
+                .andExpect(jsonPath("$.totalPages").value(2))
+                .andExpect(jsonPath("$.content.length()").value(1));
+
+        // Combined with location
+        mockMvc.perform(get("/api/hotels")
+                        .param("minPrice", "5000")
+                        .param("maxPrice", "20000")
+                        .param("minRating", "5")
+                        .param("amenities", "Pool")
+                        .param("location", "Goa")
+                        .param("guests", "2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].location").value("Goa"));
+
+        // Invalid range (minPrice > maxPrice) and negative minPrice
+        mockMvc.perform(get("/api/hotels")
+                        .param("minPrice", "15000")
+                        .param("maxPrice", "10000"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400));
+
+        mockMvc.perform(get("/api/hotels")
+                        .param("minPrice", "-100"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400));
+    }
 }

@@ -1,0 +1,168 @@
+<section class="card filter-card" aria-label="Hotel price and refine filters">
+  <div class="filter-head">
+    <div>
+      <span class="filter-kicker">Refine Results</span>
+      <h3>Price &amp; Preferences</h3>
+    </div>
+    @if (inDrawer) {
+      <button
+        type="button"
+        class="drawer-close-btn"
+        aria-label="Close filters drawer"
+        (click)="closeDrawer.emit()"
+      >
+        ✕
+      </button>
+    }
+  </div>
+
+  <!-- Nightly Price Filter -->
+  <div class="filter-group">
+    <div class="group-top">
+      <span class="group-label">Nightly Rate (INR)</span>
+      <span class="range-readout" data-testid="selected-price-range">
+        @if (draftMinPrice === null && draftMaxPrice === null) {
+          All rates
+        } @else if (draftMinPrice !== null && draftMaxPrice !== null) {
+          {{ draftMinPrice | currency: 'INR' : 'symbol' : '1.0-0' }} –
+          {{ draftMaxPrice | currency: 'INR' : 'symbol' : '1.0-0' }}
+        } @else if (draftMinPrice !== null) {
+          From {{ draftMinPrice | currency: 'INR' : 'symbol' : '1.0-0' }}
+        } @else {
+          Up to {{ draftMaxPrice | currency: 'INR' : 'symbol' : '1.0-0' }}
+        }
+      </span>
+    </div>
+
+    <div class="dual-slider">
+      <div class="slider-track"></div>
+      <div
+        class="slider-fill"
+        [style.left.%]="rangeLeftPct"
+        [style.width.%]="rangeWidthPct"
+      ></div>
+      <input
+        type="range"
+        class="range-thumb range-min"
+        aria-label="Minimum nightly price slider"
+        [min]="sliderMin"
+        [max]="sliderMax"
+        [step]="500"
+        [ngModel]="effectiveSliderMin"
+        (ngModelChange)="onMinSliderChange($event)"
+      />
+      <input
+        type="range"
+        class="range-thumb range-max"
+        aria-label="Maximum nightly price slider"
+        [min]="sliderMin"
+        [max]="sliderMax"
+        [step]="500"
+        [ngModel]="effectiveSliderMax"
+        (ngModelChange)="onMaxSliderChange($event)"
+      />
+    </div>
+
+    <div class="slider-scale">
+      <span>{{ sliderMin | currency: 'INR' : 'symbol' : '1.0-0' }}</span>
+      <span>{{ sliderMax | currency: 'INR' : 'symbol' : '1.0-0' }}+</span>
+    </div>
+
+    <div class="price-inputs-row">
+      <div class="field">
+        <label [for]="inDrawer ? 'drawerMinPrice' : 'sidebarMinPrice'">Min Price (₹)</label>
+        <input
+          [id]="inDrawer ? 'drawerMinPrice' : 'sidebarMinPrice'"
+          type="number"
+          min="0"
+          step="500"
+          placeholder="Any"
+          [(ngModel)]="draftMinPrice"
+          (ngModelChange)="onManualPriceInput()"
+          (keyup.enter)="apply()"
+        />
+      </div>
+
+      <div class="field">
+        <label [for]="inDrawer ? 'drawerMaxPrice' : 'sidebarMaxPrice'">Max Price (₹)</label>
+        <input
+          [id]="inDrawer ? 'drawerMaxPrice' : 'sidebarMaxPrice'"
+          type="number"
+          min="0"
+          step="500"
+          placeholder="Any"
+          [(ngModel)]="draftMaxPrice"
+          (ngModelChange)="onManualPriceInput()"
+          (keyup.enter)="apply()"
+        />
+      </div>
+    </div>
+
+    @if (validationError) {
+      <p class="field-error" role="alert">{{ validationError }}</p>
+    }
+
+    <div class="preset-list" role="group" aria-label="Quick price ranges">
+      @for (preset of presets; track preset.id) {
+        <button
+          type="button"
+          class="filter-chip"
+          [class.active]="isPresetActive(preset)"
+          (click)="selectPreset(preset)"
+        >
+          {{ preset.label }}
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Star Rating Filter -->
+  <div class="filter-group">
+    <span class="group-label">Star Rating</span>
+    <div class="rating-row" role="group" aria-label="Minimum star rating">
+      @for (opt of ratingOptions; track opt.label) {
+        <button
+          type="button"
+          class="filter-chip"
+          [class.active]="draftMinRating === opt.value"
+          (click)="selectRating(opt.value)"
+        >
+          {{ opt.label }}
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Amenities Filter -->
+  @if (availableAmenities.length > 0) {
+    <div class="filter-group">
+      <span class="group-label">Amenities</span>
+      <div class="amenity-checks">
+        @for (amenity of availableAmenities; track amenity) {
+          <label class="amenity-option" [class.active]="hasAmenity(amenity)">
+            <input
+              type="checkbox"
+              [checked]="hasAmenity(amenity)"
+              (change)="toggleAmenity(amenity)"
+            />
+            <span>{{ amenity }}</span>
+          </label>
+        }
+      </div>
+    </div>
+  }
+
+  <div class="filter-actions">
+    <button
+      type="button"
+      class="btn btn-primary"
+      [disabled]="!!validationError || loading"
+      (click)="apply()"
+    >
+      Apply Filters
+    </button>
+    <button type="button" class="btn btn-secondary" [disabled]="loading" (click)="reset()">
+      Reset
+    </button>
+  </div>
+</section>

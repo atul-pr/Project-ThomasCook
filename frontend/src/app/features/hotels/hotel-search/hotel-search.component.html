@@ -82,9 +82,9 @@
       <span class="section-kicker">Travel Styles</span>
       <h2>Curated by How You Travel</h2>
     </div>
-    @if (city || activeCategory !== 'all') {
-      <button type="button" class="btn btn-secondary reset-btn" (click)="applyCategory('all')">
-        Reset Filters
+    @if (hasActiveFilters) {
+      <button type="button" class="btn btn-secondary" (click)="clearAllFilters()">
+        Clear All Filters
       </button>
     }
   </div>
@@ -138,7 +138,7 @@
 
 <app-error-banner [message]="errorMessage"></app-error-banner>
 
-<!-- Featured Hotels -->
+<!-- Featured Hotels + Sidebar Filter -->
 <section class="editorial-section" id="featured-hotels" appReveal>
   <div class="section-head">
     <div>
@@ -151,112 +151,203 @@
         }
       </h2>
     </div>
-    @if (hotelPage) {
-      <span class="page-pill">
-        Showing {{ hotelPage.content.length }} of {{ hotelPage.totalElements }} properties
-      </span>
-    }
-  </div>
 
-  @if (loading && !hotelPage) {
-    <div class="skeleton-grid" aria-busy="true" aria-label="Loading available hotels">
-      @for (s of [1, 2, 3]; track s) {
-        <div class="card skeleton-card">
-          <div class="skeleton-box"></div>
-          <div class="skeleton-line tall"></div>
-          <div class="skeleton-line short"></div>
-          <div class="skeleton-line medium"></div>
-        </div>
+    <div class="listings-controls">
+      <button
+        type="button"
+        class="btn btn-secondary mobile-filter-btn"
+        (click)="openMobileFilters()"
+      >
+        <span>Filters</span>
+        @if (activeFilterCount > 0) {
+          <span class="count-dot">{{ activeFilterCount }}</span>
+        }
+      </button>
+
+      @if (hotelPage) {
+        <span class="page-pill" data-testid="matching-count">
+          Showing {{ hotelPage.content.length }} of {{ hotelPage.totalElements }} matching hotel{{ hotelPage.totalElements === 1 ? '' : 's' }}
+        </span>
       }
     </div>
-  } @else if (hotelPage && hotelPage.content.length === 0) {
-    <div class="card empty-state">
-      <h3>No properties matched "{{ city }}"</h3>
-      <p class="muted">Clear your destination filter to browse all StayAtlas properties.</p>
-      <button type="button" class="btn btn-secondary" (click)="applyCategory('all')">Show All Hotels</button>
+  </div>
+
+  @if (activeFilterCount > 0) {
+    <div class="active-filters-bar" aria-label="Active filters">
+      <span class="active-label">Active:</span>
+      @if (activePriceLabel) {
+        <button type="button" class="active-chip" (click)="clearPriceFilter()">
+          {{ activePriceLabel }} <span aria-hidden="true">×</span>
+        </button>
+      }
+      @if (city.trim()) {
+        <button type="button" class="active-chip" (click)="clearCityFilter()">
+          City: {{ city }} <span aria-hidden="true">×</span>
+        </button>
+      }
+      @if (minRating !== null) {
+        <button type="button" class="active-chip" (click)="clearRatingFilter()">
+          {{ minRating }}★ &amp; Up <span aria-hidden="true">×</span>
+        </button>
+      }
+      @for (amenity of selectedAmenities; track amenity) {
+        <button type="button" class="active-chip" (click)="removeAmenityFilter(amenity)">
+          {{ amenity }} <span aria-hidden="true">×</span>
+        </button>
+      }
+      <button type="button" class="clear-all-link" (click)="clearAllFilters()">Clear All</button>
     </div>
-  } @else if (hotelPage) {
-    <div class="hotel-grid">
-      @for (hotel of hotelPage.content; track hotel.id) {
-        <article class="card hotel-card">
-          <div class="hotel-photo-wrap" (click)="viewHotel(hotel.id)">
-            <img
-              [src]="hotel.imageUrl || '/assets/images/hotel-mumbai.jpg'"
-              [alt]="hotel.name + ' in ' + hotel.city"
-              class="hotel-photo"
-            />
-            <div class="photo-badges">
-              <span class="city-pill">{{ hotel.city }}</span>
-              <span class="rating-pill">{{ hotel.starRating }} ★</span>
+  }
+
+  <div class="listings-layout">
+    <aside class="desktop-sidebar" aria-label="Search filters">
+      <app-hotel-filter-panel
+        [sliderMin]="sliderMin"
+        [sliderMax]="sliderMax"
+        [availableAmenities]="availableAmenities"
+        [appliedMinPrice]="minPrice"
+        [appliedMaxPrice]="maxPrice"
+        [appliedMinRating]="minRating"
+        [appliedAmenities]="selectedAmenities"
+        [loading]="loading"
+        (filtersApply)="applyPanelFilters($event)"
+        (filtersReset)="clearAllFilters()"
+      ></app-hotel-filter-panel>
+    </aside>
+
+    <div class="listings-main">
+      @if (loading && !hotelPage) {
+        <div class="skeleton-grid" aria-busy="true" aria-label="Loading available hotels">
+          @for (s of [1, 2, 3]; track s) {
+            <div class="card skeleton-card">
+              <div class="skeleton-box"></div>
+              <div class="skeleton-line tall"></div>
+              <div class="skeleton-line short"></div>
+              <div class="skeleton-line medium"></div>
             </div>
-          </div>
-
-          <div class="hotel-body">
-            <div class="hotel-top">
-              <h3>{{ hotel.name }}</h3>
-              <p class="location">{{ hotel.address }}, {{ hotel.city }}</p>
-            </div>
-
-            <p class="description">{{ hotel.description }}</p>
-
-            <div class="amenity-list">
-              @for (amenity of hotel.amenities.slice(0, 4); track amenity) {
-                <span class="amenity-chip">{{ amenity }}</span>
-              }
-            </div>
-
-            @if (hotel.totalAvailableRooms !== null) {
-              <div>
-                <span
-                  class="badge"
-                  [class.badge-success]="hotel.totalAvailableRooms > 0"
-                  [class.badge-danger]="hotel.totalAvailableRooms === 0"
-                >
-                  {{
-                    hotel.totalAvailableRooms > 0
-                      ? hotel.totalAvailableRooms + ' room(s) available for ' + guests + ' guest(s)'
-                      : 'Sold out for selected dates'
-                  }}
-                </span>
-              </div>
-            }
-
-            <div class="hotel-footer">
-              <div class="price-block">
-                <span class="from-label">From</span>
-                <div class="price-line">
-                  <strong>{{ hotel.startingPricePerNight | currency: hotel.currency : 'symbol' : '1.0-0' }}</strong>
-                  <span>/ night</span>
+          }
+        </div>
+      } @else if (hotelPage && hotelPage.content.length === 0) {
+        <div class="card empty-state" data-testid="empty-hotels-state">
+          <h3>No hotels matched your selected filters</h3>
+          <p class="muted">
+            Try widening your nightly price range or clearing location, rating, and amenity filters.
+          </p>
+          <button type="button" class="btn btn-primary" (click)="clearAllFilters()">
+            Clear All Filters
+          </button>
+        </div>
+      } @else if (hotelPage) {
+        <div class="hotel-grid">
+          @for (hotel of hotelPage.content; track hotel.id) {
+            <article class="card hotel-card">
+              <div class="hotel-photo-wrap" (click)="viewHotel(hotel.id)">
+                <img
+                  [src]="hotel.imageUrl || '/assets/images/hotel-mumbai.jpg'"
+                  [alt]="hotel.name + ' in ' + hotel.city"
+                  class="hotel-photo"
+                />
+                <div class="photo-badges">
+                  <span class="city-pill">{{ hotel.city }}</span>
+                  <span class="rating-pill">{{ hotel.starRating }} ★</span>
                 </div>
               </div>
 
-              <div class="card-ctas">
-                <button type="button" class="btn btn-secondary" (click)="viewHotel(hotel.id)">
-                  View Hotel
-                </button>
-                <button type="button" class="btn btn-primary" (click)="bookHotel(hotel.id)">
-                  Book Now
-                </button>
+              <div class="hotel-body">
+                <div class="hotel-top">
+                  <h3>{{ hotel.name }}</h3>
+                  <p class="location">{{ hotel.address }}, {{ hotel.city }}</p>
+                </div>
+
+                <p class="description">{{ hotel.description }}</p>
+
+                <div class="amenity-list">
+                  @for (amenity of hotel.amenities.slice(0, 4); track amenity) {
+                    <span class="amenity-chip">{{ amenity }}</span>
+                  }
+                </div>
+
+                @if (hotel.totalAvailableRooms !== null) {
+                  <div>
+                    <span
+                      class="badge"
+                      [class.badge-success]="hotel.totalAvailableRooms > 0"
+                      [class.badge-danger]="hotel.totalAvailableRooms === 0"
+                    >
+                      {{
+                        hotel.totalAvailableRooms > 0
+                          ? hotel.totalAvailableRooms + ' room(s) available for ' + guests + ' guest(s)'
+                          : 'Sold out for selected dates'
+                      }}
+                    </span>
+                  </div>
+                }
+
+                <div class="hotel-footer">
+                  <div class="price-block">
+                    <span class="from-label">From</span>
+                    <div class="price-line">
+                      <strong>{{ hotel.startingPricePerNight | currency: hotel.currency : 'symbol' : '1.0-0' }}</strong>
+                      <span>/ night</span>
+                    </div>
+                  </div>
+
+                  <div class="card-ctas">
+                    <button type="button" class="btn btn-secondary" (click)="viewHotel(hotel.id)">
+                      View Hotel
+                    </button>
+                    <button type="button" class="btn btn-primary" (click)="bookHotel(hotel.id)">
+                      Book Now
+                    </button>
+                  </div>
+                </div>
               </div>
-            </div>
+            </article>
+          }
+        </div>
+
+        @if (hotelPage.totalPages > 1) {
+          <div class="pagination-bar">
+            <button type="button" class="btn btn-secondary" [disabled]="hotelPage.first" (click)="changePage(-1)">
+              ← Previous
+            </button>
+            <span class="muted">Page {{ hotelPage.page + 1 }} of {{ hotelPage.totalPages }}</span>
+            <button type="button" class="btn btn-secondary" [disabled]="hotelPage.last" (click)="changePage(1)">
+              Next →
+            </button>
           </div>
-        </article>
+        }
       }
     </div>
-
-    @if (hotelPage.totalPages > 1) {
-      <div class="pagination-bar">
-        <button type="button" class="btn btn-secondary" [disabled]="hotelPage.first" (click)="changePage(-1)">
-          ← Previous
-        </button>
-        <span class="muted">Page {{ hotelPage.page + 1 }} of {{ hotelPage.totalPages }}</span>
-        <button type="button" class="btn btn-secondary" [disabled]="hotelPage.last" (click)="changePage(1)">
-          Next →
-        </button>
-      </div>
-    }
-  }
+  </div>
 </section>
+
+@if (mobileFiltersOpen) {
+  <div class="drawer-backdrop" (click)="closeMobileFilters()">
+    <div
+      class="drawer-panel"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Filter hotels"
+      (click)="$event.stopPropagation()"
+    >
+      <app-hotel-filter-panel
+        [sliderMin]="sliderMin"
+        [sliderMax]="sliderMax"
+        [availableAmenities]="availableAmenities"
+        [appliedMinPrice]="minPrice"
+        [appliedMaxPrice]="maxPrice"
+        [appliedMinRating]="minRating"
+        [appliedAmenities]="selectedAmenities"
+        [inDrawer]="true"
+        [loading]="loading"
+        (filtersApply)="applyPanelFilters($event)"
+        (filtersReset)="clearAllFilters()"
+        (closeDrawer)="closeMobileFilters()"
+      ></app-hotel-filter-panel>
+    </div>
+  </div>
+}
 
 <!-- Recommended Stays (5-Star Collection) -->
 @if (recommendedHotels.length > 0) {

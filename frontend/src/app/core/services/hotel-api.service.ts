@@ -2,13 +2,23 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { HotelDetail, HotelSummary, PageResponse, RoomType } from '../models/hotel.model';
+import {
+  HotelDetail,
+  HotelFilterMetadata,
+  HotelSummary,
+  PageResponse,
+  RoomType
+} from '../models/hotel.model';
 
 export interface HotelSearchParams {
   city?: string;
   checkIn?: string;
   checkOut?: string;
   guests?: number;
+  minPrice?: number | null;
+  maxPrice?: number | null;
+  minRating?: number | null;
+  amenities?: string[];
   page?: number;
   size?: number;
   sortBy?: string;
@@ -34,12 +44,32 @@ export class HotelApiService {
     if (filters.checkIn && filters.checkOut) {
       params = params.set('checkIn', filters.checkIn).set('checkOut', filters.checkOut);
     }
+    if (filters.minPrice !== null && filters.minPrice !== undefined) {
+      params = params.set('minPrice', String(filters.minPrice));
+    }
+    if (filters.maxPrice !== null && filters.maxPrice !== undefined) {
+      params = params.set('maxPrice', String(filters.maxPrice));
+    }
+    if (filters.minRating !== null && filters.minRating !== undefined) {
+      params = params.set('minRating', String(filters.minRating));
+    }
+    if (filters.amenities?.length) {
+      for (const amenity of filters.amenities) {
+        if (amenity.trim()) {
+          params = params.append('amenities', amenity.trim());
+        }
+      }
+    }
 
     return this.http.get<PageResponse<HotelSummary>>(this.baseUrl, { params });
   }
 
   getCities(): Observable<string[]> {
     return this.http.get<string[]>(`${this.baseUrl}/cities`);
+  }
+
+  getFilterMetadata(): Observable<HotelFilterMetadata> {
+    return this.http.get<HotelFilterMetadata>(`${this.baseUrl}/filter-metadata`);
   }
 
   getHotelById(hotelId: number): Observable<HotelDetail> {
