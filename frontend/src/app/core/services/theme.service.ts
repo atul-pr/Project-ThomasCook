@@ -3,7 +3,8 @@ import { Injectable, computed, signal } from '@angular/core';
 export type ThemePreference = 'light' | 'dark' | 'system';
 export type ResolvedTheme = 'light' | 'dark';
 
-const STORAGE_KEY = 'stayatlas-theme';
+const STORAGE_KEY = 'atulstays-theme';
+const LEGACY_STORAGE_KEY = 'stayatlas-theme';
 
 @Injectable({ providedIn: 'root' })
 export class ThemeService {
@@ -49,7 +50,8 @@ export class ThemeService {
 
   private readStoredPreference(): ThemePreference {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
+      const saved =
+        localStorage.getItem(STORAGE_KEY) || localStorage.getItem(LEGACY_STORAGE_KEY);
       if (saved === 'light' || saved === 'dark' || saved === 'system') {
         return saved;
       }

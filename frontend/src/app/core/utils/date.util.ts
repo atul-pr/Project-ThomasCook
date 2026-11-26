@@ -67,7 +67,7 @@ export function parsePositiveIntParam(raw: string | null): number | null {
   return Number.isSafeInteger(value) && value > 0 ? value : null;
 }
 
-const SESSION_BOOKING_EMAIL_PREFIX = 'stayatlas-booking-email:';
+const SESSION_BOOKING_EMAIL_PREFIX = 'atulstays-booking-email:';
 
 export function saveBookingSessionEmail(reference: string, email: string): void {
   const ref = reference.trim().toUpperCase();

@@ -16,7 +16,7 @@ export class AppComponent implements OnDestroy {
   private readonly navSub: Subscription;
   private animTimeout: ReturnType<typeof setTimeout> | null = null;
 
-  title = 'StayAtlas Hotel Booking Portal';
+  title = 'AtulStays Hotel Booking Portal';
   readonly routeEntering = signal(true);
 
   constructor() {

@@ -10,9 +10,9 @@ import { ThemeService } from '../../../core/services/theme.service';
     <header class="navbar">
       <div class="container navbar-inner">
         <a routerLink="/hotels" class="brand" (click)="closeMenu()">
-          <span class="brand-mark" aria-hidden="true">S</span>
+          <span class="brand-mark" aria-hidden="true">A</span>
           <span class="brand-text">
-            <strong>StayAtlas</strong>
+            <strong>AtulStays</strong>
             <small>Curated Stays · India</small>
           </span>
         </a>

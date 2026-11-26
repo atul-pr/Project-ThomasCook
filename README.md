@@ -1,6 +1,6 @@
-# StayAtlas — Hotel Booking Portal
+# AtulStays — Hotel Booking Portal
 
-**StayAtlas** is a full-stack **Hotel Booking Portal** built as a **Scalable Modular Monolith** with **Java 21, Spring Boot 3, Spring Data JPA, Flyway, MySQL, and Angular 19**. It delivers real-time room availability checks, authoritative backend INR (`₹`) pricing, transaction-safe reservation creation with pessimistic row locking, idempotent booking retries, guest booking retrieval and cancellation, and a **Smart Alternative Dates** recommendation engine.
+**AtulStays** is a full-stack **Hotel Booking Portal** built as a **Scalable Modular Monolith** with **Java 21, Spring Boot 3, Spring Data JPA, Flyway, MySQL, and Angular 19**. It delivers real-time room availability checks, authoritative backend INR (`₹`) pricing, transaction-safe reservation creation with pessimistic row locking, idempotent booking retries, guest booking retrieval and cancellation, and a **Smart Alternative Dates** recommendation engine.
 
 ---
 
@@ -48,7 +48,7 @@
 
 ## Architecture Overview
 
-StayAtlas is structured as a **Modular Monolith** with strict package boundaries:
+AtulStays is structured as a **Modular Monolith** with strict package boundaries:
 - `com.hotelportal.hotel` — Hotel catalog, search, pagination, sorting, and batch availability summaries.
 - `com.hotelportal.room` — Room categories (`totalRooms`, `maxGuests`, `basePricePerNight`) and hotel availability views.
 - `com.hotelportal.availability` — Date validation, overlap counting, and Smart Alternative Dates.
