@@ -5,7 +5,7 @@
 StayAtlas is built as a **Scalable Modular Monolith** rather than microservices to avoid distributed transaction overhead while keeping clear domain boundaries.
 
 ```text
-Angular 19 SPA (Lazy-Loaded Features: HotelSearch, HotelDetail, ManageBooking, InfoPage)
+Angular 19 SPA (Lazy-Loaded Routes: HotelSearch, HotelDetail, HotelAvailability, BookingForm, BookingConfirmation, ManageBooking, ManageBookingDetail, InfoPage)
         │  Stateless HTTP/JSON (CORS, Idempotency-Key)
         ▼
 Spring Boot 3 REST Controllers (/api/hotels, /api/availability, /api/bookings, /api/health)
@@ -98,7 +98,8 @@ erDiagram
 ## 3. Main REST API Endpoints
 
 - `GET /api/health` — Executes `SELECT 1` against HikariCP `DataSource` and reports `UP`/`CONNECTED` or `503` `DOWN`.
-- `GET /api/hotels` — Paginated, sorted search supporting `location`/`city`, `checkIn`, `checkOut`, `guests`, `page`, `size`, `sortBy`, `direction`, `sort`.
+- `GET /api/hotels` — Paginated, sorted JPA `Specification` search supporting `location`/`city`, `checkIn`, `checkOut`, `guests`, `minPrice`, `maxPrice`, `minRating`, `amenities`, `page`, `size`, `sortBy`, `direction`, `sort`.
+- `GET /api/hotels/filter-metadata` — Aggregates `MIN(basePricePerNight)`, `MAX(basePricePerNight)`, currency, and distinct amenities from DB.
 - `GET /api/hotels/{id}` — Returns `HotelDetailResponse` (`404` if invalid ID).
 - `GET /api/hotels/{id}/availability` — Validates dates and returns `HotelAvailabilityResponse` with per-room availability and INR `PriceBreakdown`.
 - `GET /api/hotels/{id}/rooms` — Returns room categories with live availability and Smart Alternative Dates.

@@ -27,12 +27,14 @@
 ## Key Features
 
 - **5 Curated Indian Hotels & 11 Room Categories:** Seeded automatically via Flyway across Mumbai, Goa, Jaipur, Bengaluru, and New Delhi.
-- **Location Search, Categories, Sorting & Pagination:** Filter by city/address, travel style categories (Family, Business, Couples, Beach, Luxury), star rating or name sorting, and paginated results.
+- **Database-Level Search & Advanced Filters:** Filter at the MySQL/JPA layer by location, check-in/check-out dates, guest capacity, **Min/Max room price per night** (`minPrice`/`maxPrice` with synchronized dual slider, manual inputs, and quick presets), minimum star rating, and multiple hotel amenities, combined with sorting and pagination.
+- **Dedicated Multi-Page Angular Routes:** Separate bookmarkable/refresh-safe routes for `/hotels`, `/hotels/:id`, `/hotels/:id/availability`, `/booking/:hotelId/:roomTypeId`, `/booking/confirmation/:reference`, `/manage-booking`, and `/manage-booking/:reference`, with breadcrumbs and Back navigation.
+- **Light, Dark & System Themes:** Flicker-free pre-render theme initialization with `localStorage` persistence and accessible desktop/mobile theme switchers.
 - **Date Validation & Exclusive Check-Out Overlap Math:** Rejects past check-in dates and `checkOut <= checkIn`; allows back-to-back stays (`checkIn2 == checkOut1`).
 - **Authoritative Backend INR (`₹`) Pricing:** Computes `nights * basePricePerNight + 12% GST` using `BigDecimal` on the backend and persists immutable price snapshots on every booking.
 - **Concurrency-Safe Reservations:** Uses `@Transactional(isolation = Isolation.READ_COMMITTED)` + `PESSIMISTIC_WRITE` (`SELECT ... FOR UPDATE`) on the parent `RoomType` row to prevent double-booking the last room.
 - **Idempotency-Key Support:** Protects against duplicate submissions on double-clicks or network retries via `Idempotency-Key` header and a unique DB constraint.
-- **Booking Retrieval & Cancellation:** Guests look up reservations by `bookingReference` + `guestEmail` and cancel `CONFIRMED` bookings via a confirmation modal, immediately releasing room capacity.
+- **Booking Retrieval & Cancellation:** Guests look up reservations by `bookingReference` + `guestEmail` on `/manage-booking` and cancel `CONFIRMED` bookings on `/manage-booking/:reference` via an in-page confirmation step, immediately releasing room capacity.
 - **Surprise Feature — Smart Alternative Dates:** When a room category is sold out for requested dates, automatically suggests up to 3 available date windows within the next 7 days preserving the exact stay duration.
 
 ---
@@ -122,8 +124,9 @@ All core endpoints are exposed under `/api/...` (and `/api/v1/...` for versioned
 | Method | Endpoint | Description |
 |---|---|---|
 | `GET` | `/api/health` | Verifies application and live MySQL JDBC connectivity |
-| `GET` | `/api/hotels` | Paginated & sorted hotel search (`location` or `city`, `checkIn`, `checkOut`, `guests`, `page`, `size`, `sortBy`, `direction`, `sort`) |
+| `GET` | `/api/hotels` | Paginated & sorted DB search (`location`/`city`, `checkIn`, `checkOut`, `guests`, `minPrice`, `maxPrice`, `minRating`, `amenities`, `page`, `size`, `sortBy`, `direction`, `sort`) |
 | `GET` | `/api/hotels/cities` | List distinct cities |
+| `GET` | `/api/hotels/filter-metadata` | Dynamic min/max nightly room rates and distinct hotel amenities from MySQL |
 | `GET` | `/api/hotels/{id}` | Hotel details by ID |
 | `GET` | `/api/hotels/{id}/availability` | Hotel & room-type availability + INR pricing (`checkIn`, `checkOut`, `guests`) |
 | `GET` | `/api/hotels/{id}/rooms` | Room categories with optional live availability & Smart Alternative Dates |
@@ -137,13 +140,13 @@ All core endpoints are exposed under `/api/...` (and `/api/v1/...` for versioned
 
 ## Automated Testing Instructions
 
-### Backend Tests (25 JUnit 5 Unit, Integration & Concurrency Tests)
+### Backend Tests (26 JUnit 5 Unit, Integration & Concurrency Tests)
 ```bash
 cd hotel-booking-portal/backend
 mvn clean verify
 ```
 
-### Frontend Build & Unit Tests (5 Karma/Jasmine Tests)
+### Frontend Build & Unit Tests (16 Karma/Jasmine Tests)
 ```bash
 cd hotel-booking-portal/frontend
 npm run build
