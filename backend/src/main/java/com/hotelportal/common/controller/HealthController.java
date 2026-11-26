@@ -16,7 +16,7 @@ import java.sql.SQLException;
 @RequestMapping("/api/health")
 public class HealthController {
 
-    private static final String APPLICATION_NAME = "AtulStays";
+    private static final String APPLICATION_NAME = "StayAtlas";
 
     private final DataSource dataSource;
 

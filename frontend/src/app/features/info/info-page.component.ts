@@ -19,10 +19,10 @@ type InfoPageKind = 'about' | 'privacy' | 'terms';
     ></app-breadcrumb>
     <section class="card info-card">
       @if (kind === 'about') {
-        <span class="badge badge-neutral">About AtulStays</span>
+        <span class="badge badge-neutral">About StayAtlas</span>
         <h1>Curated Hospitality Across India</h1>
         <p class="lead">
-          AtulStays connects discerning leisure and business travelers with flagship hotels in Mumbai,
+          StayAtlas connects discerning leisure and business travelers with flagship hotels in Mumbai,
           Bengaluru, Goa, Jaipur, and New Delhi—combining live room inventory, transparent INR pricing,
           and transaction-safe reservations.
         </p>
@@ -37,17 +37,17 @@ type InfoPageKind = 'about' | 'privacy' | 'terms';
           </div>
           <div class="info-block">
             <h3>Smart Alternative Dates</h3>
-            <p>When your preferred dates are full, AtulStays automatically checks the next 7 days and suggests available stays matching your trip duration.</p>
+            <p>When your preferred dates are full, StayAtlas automatically checks the next 7 days and suggests available stays matching your trip duration.</p>
           </div>
         </div>
       } @else if (kind === 'privacy') {
         <span class="badge badge-neutral">Legal</span>
         <h1>Privacy Policy</h1>
-        <p class="lead">How AtulStays handles guest reservation information.</p>
+        <p class="lead">How StayAtlas handles guest reservation information.</p>
         <ul class="policy-list">
           <li><strong>Reservation Data:</strong> We collect your name, email address, optional phone number, and stay preferences solely to confirm, retrieve, and manage your hotel booking.</li>
           <li><strong>Reference Verification:</strong> Bookings can be retrieved or cancelled only by providing both the unique booking reference (e.g., <code>HTL-XXXXXXXX</code>) and the matching guest email address.</li>
-          <li><strong>No Third-Party Ad Tracking:</strong> AtulStays does not sell guest contact information to external brokers or third-party advertising networks.</li>
+          <li><strong>No Third-Party Ad Tracking:</strong> StayAtlas does not sell guest contact information to external brokers or third-party advertising networks.</li>
         </ul>
       } @else {
         <span class="badge badge-neutral">Legal</span>
@@ -132,7 +132,7 @@ export class InfoPageComponent implements OnInit {
 
   get breadcrumbs(): BreadcrumbItem[] {
     const labelMap: Record<InfoPageKind, string> = {
-      about: 'About AtulStays',
+      about: 'About StayAtlas',
       privacy: 'Privacy Policy',
       terms: 'Terms & Conditions'
     };

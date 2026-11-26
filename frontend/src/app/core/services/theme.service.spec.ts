@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { ThemeService } from './theme.service';
 
 describe('ThemeService', () => {
-  const storageKey = 'atulstays-theme';
+  const storageKey = 'stayatlas-theme';
 
   beforeEach(() => {
     localStorage.removeItem(storageKey);

@@ -1,8 +1,8 @@
-# Architecture & System Design — AtulStays Hotel Booking Portal
+# Architecture & System Design — StayAtlas Hotel Booking Portal
 
 ## 1. Architecture and Component Interactions
 
-AtulStays is built as a **Scalable Modular Monolith** rather than microservices to avoid distributed transaction overhead while keeping clear domain boundaries.
+StayAtlas is built as a **Scalable Modular Monolith** rather than microservices to avoid distributed transaction overhead while keeping clear domain boundaries.
 
 ```text
 Angular 19 SPA (Lazy-Loaded Features: HotelSearch, HotelDetail, ManageBooking, InfoPage)

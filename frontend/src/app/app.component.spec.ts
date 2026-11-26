@@ -16,9 +16,9 @@ describe('AppComponent', () => {
     expect(app).toBeTruthy();
   });
 
-  it(`should have the 'AtulStays Hotel Booking Portal' title`, () => {
+  it(`should have the 'StayAtlas Hotel Booking Portal' title`, () => {
     const fixture = TestBed.createComponent(AppComponent);
     const app = fixture.componentInstance;
-    expect(app.title).toEqual('AtulStays Hotel Booking Portal');
+    expect(app.title).toEqual('StayAtlas Hotel Booking Portal');
   });
 });

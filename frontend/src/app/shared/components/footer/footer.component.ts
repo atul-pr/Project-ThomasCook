@@ -10,8 +10,8 @@ import { RouterLink } from '@angular/router';
       <div class="container footer-grid">
         <div class="footer-brand">
           <a routerLink="/hotels" class="footer-logo">
-            <span class="logo-monogram">A</span>
-            <strong>AtulStays</strong>
+            <span class="logo-monogram">S</span>
+            <strong>StayAtlas</strong>
           </a>
           <p class="footer-about">
             An editorial collection of heritage palaces, coastal resorts, and metropolitan business
@@ -36,7 +36,7 @@ import { RouterLink } from '@angular/router';
           <ul>
             <li><a routerLink="/hotels">Explore All Hotels</a></li>
             <li><a routerLink="/manage-booking">Manage Booking</a></li>
-            <li><a routerLink="/about">About AtulStays</a></li>
+            <li><a routerLink="/about">About StayAtlas</a></li>
             <li><a routerLink="/privacy">Privacy Policy</a></li>
             <li><a routerLink="/terms">Terms &amp; Conditions</a></li>
           </ul>
@@ -45,7 +45,7 @@ import { RouterLink } from '@angular/router';
         <div class="footer-col">
           <h4>Concierge</h4>
           <ul class="contact-list">
-            <li><a href="mailto:concierge@atulstays.in">concierge&#64;atulstays.in</a></li>
+            <li><a href="mailto:concierge@stayatlas.in">concierge&#64;stayatlas.in</a></li>
             <li><a href="tel:+912248902100">+91 22 4890 2100</a></li>
             <li>Colaba, Mumbai · 24×7 Support</li>
           </ul>
@@ -54,7 +54,7 @@ import { RouterLink } from '@angular/router';
 
       <div class="footer-bottom">
         <div class="container bottom-inner">
-          <span>© 2026 AtulStays Hospitality Pvt. Ltd. All rights reserved.</span>
+          <span>© 2026 StayAtlas Hospitality Pvt. Ltd. All rights reserved.</span>
           <span>All rates in Indian Rupees (INR ₹) · Authoritative backend pricing</span>
         </div>
       </div>

@@ -32,7 +32,7 @@ class HealthControllerTest {
         mockMvc.perform(get("/api/health"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("UP"))
-                .andExpect(jsonPath("$.application").value("AtulStays"))
+                .andExpect(jsonPath("$.application").value("StayAtlas"))
                 .andExpect(jsonPath("$.database").value("CONNECTED"));
     }
 
@@ -47,7 +47,7 @@ class HealthControllerTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.SERVICE_UNAVAILABLE);
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().status()).isEqualTo("DOWN");
-        assertThat(response.getBody().application()).isEqualTo("AtulStays");
+        assertThat(response.getBody().application()).isEqualTo("StayAtlas");
         assertThat(response.getBody().database()).isEqualTo("DISCONNECTED");
     }
 }
