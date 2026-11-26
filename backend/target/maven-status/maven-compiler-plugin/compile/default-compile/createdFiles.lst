@@ -23,6 +23,7 @@ com\hotelportal\availability\controller\AvailabilityController.class
 com\hotelportal\common\exception\GlobalExceptionHandler.class
 com\hotelportal\booking\dto\CreateBookingRequest.class
 com\hotelportal\availability\dto\HotelAvailabilityResponse.class
+com\hotelportal\common\controller\HealthController.class
 com\hotelportal\booking\entity\Booking.class
 com\hotelportal\pricing\service\PricingService.class
 com\hotelportal\booking\service\BookingService$BookingCreationResult.class
@@ -35,4 +36,5 @@ com\hotelportal\common\exception\ResourceNotFoundException.class
 com\hotelportal\hotel\dto\HotelSummaryResponse.class
 com\hotelportal\room\entity\RoomType.class
 com\hotelportal\common\dto\ApiError.class
+com\hotelportal\common\controller\HealthController$HealthStatusResponse.class
 com\hotelportal\hotel\controller\HotelController.class
