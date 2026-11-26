@@ -1,0 +1,135 @@
+<app-breadcrumb
+  [items]="breadcrumbs"
+  [backRoute]="['/hotels']"
+  backLabel="Explore More Hotels"
+></app-breadcrumb>
+
+<app-error-banner [message]="errorMessage"></app-error-banner>
+
+@if (loading) {
+  <div class="card panel">Loading your booking confirmation...</div>
+} @else if (booking) {
+  <section class="card confirmation-card" role="status">
+    <div class="conf-head">
+      <div>
+        <span
+          class="badge"
+          [class.badge-success]="booking.status === 'CONFIRMED'"
+          [class.badge-danger]="booking.status === 'CANCELLED'"
+        >
+          {{ booking.status }}
+        </span>
+        <h1>{{ booking.status === 'CONFIRMED' ? 'Booking Confirmed!' : 'Reservation Cancelled' }}</h1>
+        <p class="muted">
+          Keep your booking reference handy to view details or cancel your stay at any time.
+        </p>
+      </div>
+
+      <div class="ref-box">
+        <span class="muted">Booking Reference</span>
+        <div class="ref-copy-row">
+          <strong>{{ booking.bookingReference }}</strong>
+          <button
+            type="button"
+            class="copy-btn"
+            (click)="copyReference(booking.bookingReference)"
+          >
+            {{ copiedReference ? 'Copied ✓' : 'Copy' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="conf-grid">
+      <div class="conf-block">
+        <h3>Stay Summary</h3>
+        <p><strong>Hotel:</strong> {{ booking.hotelName }} ({{ booking.hotelCity }})</p>
+        <p><strong>Room Category:</strong> {{ booking.roomTypeName }}</p>
+        <p><strong>Check-in:</strong> {{ booking.checkInDate }}</p>
+        <p>
+          <strong>Check-out:</strong> {{ booking.checkOutDate }} ({{ booking.nights }}
+          night{{ booking.nights > 1 ? 's' : '' }})
+        </p>
+        <p><strong>Guests:</strong> {{ booking.guests }}</p>
+      </div>
+
+      <div class="conf-block">
+        <h3>Guest &amp; Payment Snapshot</h3>
+        <p><strong>Guest Name:</strong> {{ booking.guestName }}</p>
+        <p><strong>Email:</strong> {{ booking.guestEmail }}</p>
+        @if (booking.guestPhone) {
+          <p><strong>Phone:</strong> {{ booking.guestPhone }}</p>
+        }
+        <p>
+          <strong>Rate / night:</strong>
+          {{ booking.pricePerNightSnapshot | currency: booking.currency : 'symbol' : '1.0-0' }}
+        </p>
+        <p>
+          <strong>Taxes (GST):</strong>
+          {{ booking.taxAmountSnapshot | currency: booking.currency : 'symbol' : '1.0-2' }}
+        </p>
+        <p class="total-amount">
+          <strong>Total Amount:</strong>
+          {{ booking.totalAmountSnapshot | currency: booking.currency : 'symbol' : '1.0-2' }}
+        </p>
+      </div>
+    </div>
+
+    @if (booking.specialRequests) {
+      <p class="special-req"><strong>Special Requests:</strong> {{ booking.specialRequests }}</p>
+    }
+
+    <div class="conf-footer">
+      <span class="muted timestamps">
+        Booked {{ booking.createdAt | date: 'medium' }}
+      </span>
+      <div class="conf-actions">
+        <button type="button" class="btn btn-primary" (click)="goToManageBooking()">
+          Manage / Cancel Booking
+        </button>
+        <a [routerLink]="['/hotels', booking.hotelId]" class="btn btn-secondary">
+          View Hotel
+        </a>
+        <a routerLink="/hotels" class="btn btn-secondary">
+          Book Another Stay
+        </a>
+      </div>
+    </div>
+  </section>
+} @else if (needsEmailVerification) {
+  <section class="card verify-card">
+    <span class="section-kicker">Guest Verification</span>
+    <h1>View Booking Confirmation</h1>
+    <p class="muted">
+      Enter the email address used for reference <strong>{{ reference }}</strong> to retrieve your confirmation details.
+    </p>
+    <form [formGroup]="verifyForm" (ngSubmit)="verifyAndLoad()" class="verify-form" novalidate>
+      <div class="field">
+        <label for="verifyEmail">Guest Email *</label>
+        <input id="verifyEmail" type="email" formControlName="email" placeholder="you@example.com" />
+        @if (verifyForm.controls.email.touched && verifyForm.controls.email.errors) {
+          <span class="field-error">
+            {{
+              verifyForm.controls.email.errors['required']
+                ? 'Guest email is required.'
+                : 'Please enter a valid email address.'
+            }}
+          </span>
+        }
+      </div>
+      <div class="verify-actions">
+        <button type="submit" class="btn btn-primary">View Confirmation</button>
+        <a routerLink="/manage-booking" class="btn btn-secondary">Lookup Another Booking</a>
+      </div>
+    </form>
+  </section>
+} @else {
+  <div class="card empty-state">
+    <h3>Booking Confirmation Not Found</h3>
+    <p class="muted">We could not verify this booking reference. Try looking it up in Manage Booking.</p>
+    <div class="empty-actions">
+      <a routerLink="/manage-booking" class="btn btn-primary">Manage Booking</a>
+      <a routerLink="/hotels" class="btn btn-secondary">Explore Hotels</a>
+    </div>
+  </div>
+}

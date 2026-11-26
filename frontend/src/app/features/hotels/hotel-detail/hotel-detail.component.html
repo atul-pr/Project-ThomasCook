@@ -1,6 +1,10 @@
-<div class="back-row">
-  <a routerLink="/hotels" class="back-link">← Back to Explore Hotels</a>
-</div>
+<app-breadcrumb
+  [items]="breadcrumbs"
+  [backRoute]="['/hotels']"
+  backLabel="Back to Explore Hotels"
+></app-breadcrumb>
+
+<app-error-banner [message]="errorMessage"></app-error-banner>
 
 @if (loadingHotel) {
   <div class="card panel">Loading property details...</div>
@@ -19,248 +23,76 @@
       <h1>{{ hotel.name }}</h1>
       <p class="muted address-line">{{ hotel.address }}</p>
       <p class="hero-desc">{{ hotel.description }}</p>
+
       <div class="amenity-list">
         @for (amenity of hotel.amenities; track amenity) {
           <span class="amenity-chip">{{ amenity }}</span>
         }
       </div>
+
+      <div class="hero-cta-row">
+        <button type="button" class="btn btn-primary" (click)="goToAvailability()">
+          Check Room Availability &amp; Rates
+        </button>
+        <a routerLink="/hotels" class="btn btn-secondary">Browse All Hotels</a>
+      </div>
     </div>
   </section>
-}
 
-<section class="card date-bar">
-  <div class="date-grid">
-    <div class="field">
-      <label for="detailCheckIn">Check-in</label>
-      <input id="detailCheckIn" type="date" [min]="minDate" [(ngModel)]="checkIn" />
-    </div>
-    <div class="field">
-      <label for="detailCheckOut">Check-out</label>
-      <input id="detailCheckOut" type="date" [min]="checkIn || minDate" [(ngModel)]="checkOut" />
-    </div>
-    <div class="field">
-      <label for="detailGuests">Guests</label>
-      <select id="detailGuests" [(ngModel)]="guests">
-        @for (n of [1, 2, 3, 4, 5]; track n) {
-          <option [ngValue]="n">{{ n }} Guest{{ n > 1 ? 's' : '' }}</option>
-        }
-      </select>
-    </div>
-    <div class="date-btn-wrap">
-      <button type="button" class="btn btn-primary" [disabled]="loadingRooms" (click)="refreshAvailability()">
-        {{ loadingRooms ? 'Checking...' : 'Update Availability' }}
-      </button>
-    </div>
-  </div>
-</section>
-
-<app-error-banner [message]="errorMessage"></app-error-banner>
-
-@if (confirmedBooking) {
-  <section class="card confirmation-card" role="status">
-    <div class="conf-head">
+  <section class="rooms-section">
+    <div class="section-head">
       <div>
-        <span class="badge badge-success">{{ confirmedBooking.status }}</span>
-        <h2>Booking Confirmed!</h2>
+        <span class="section-kicker">Accommodations</span>
+        <h2>Room Categories</h2>
       </div>
-      <div class="ref-box">
-        <span class="muted">Booking Reference</span>
-        <div class="ref-copy-row">
-          <strong>{{ confirmedBooking.bookingReference }}</strong>
-          <button
-            type="button"
-            class="copy-btn"
-            (click)="copyReference(confirmedBooking.bookingReference)"
-          >
-            {{ copiedReference ? 'Copied ✓' : 'Copy' }}
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <div class="conf-grid">
-      <p><strong>Hotel:</strong> {{ confirmedBooking.hotelName }} ({{ confirmedBooking.hotelCity }})</p>
-      <p><strong>Room Category:</strong> {{ confirmedBooking.roomTypeName }}</p>
-      <p><strong>Guest Name:</strong> {{ confirmedBooking.guestName }}</p>
-      <p><strong>Email:</strong> {{ confirmedBooking.guestEmail }}</p>
-      <p><strong>Check-in:</strong> {{ confirmedBooking.checkInDate }}</p>
-      <p><strong>Check-out:</strong> {{ confirmedBooking.checkOutDate }} ({{ confirmedBooking.nights }} night{{ confirmedBooking.nights > 1 ? 's' : '' }})</p>
-      <p><strong>Rate / night:</strong> {{ confirmedBooking.pricePerNightSnapshot | currency: confirmedBooking.currency : 'symbol' : '1.0-0' }}</p>
-      <p><strong>Total Amount:</strong> <strong>{{ confirmedBooking.totalAmountSnapshot | currency: confirmedBooking.currency : 'symbol' : '1.0-2' }}</strong></p>
-    </div>
-
-    <div class="conf-actions">
       <a
-        routerLink="/manage-booking"
-        [queryParams]="{ reference: confirmedBooking.bookingReference, email: confirmedBooking.guestEmail }"
-        class="btn btn-primary"
+        [routerLink]="['/hotels', hotel.id, 'availability']"
+        [queryParams]="availabilityQueryParams"
+        class="btn btn-secondary"
       >
-        View / Manage Booking
+        Select Dates &amp; Guests →
       </a>
     </div>
-  </section>
-}
 
-<section class="rooms-section">
-  <h2>Select Your Room</h2>
-
-  @if (loadingRooms && rooms.length === 0) {
-    <div class="card panel">Checking live room availability...</div>
-  } @else {
-    <div class="room-list">
-      @for (room of rooms; track room.id) {
-        <article class="card room-card">
-          <div class="room-main">
-            <div class="room-top">
-              <h3>{{ room.name }}</h3>
-              <span class="badge badge-neutral">Up to {{ room.maxGuests }} guest{{ room.maxGuests > 1 ? 's' : '' }}</span>
-            </div>
-            <p class="room-desc">{{ room.description }}</p>
-            <div class="amenity-list">
-              @for (a of room.amenities; track a) {
-                <span class="amenity-chip">{{ a }}</span>
-              }
-            </div>
-            <div class="availability-status">
-              @if (!room.canAccommodateGuests) {
-                <span class="badge badge-danger">Max {{ room.maxGuests }} guests (reduce guest count)</span>
-              } @else if ((room.availableRooms ?? 0) > 0) {
-                <span class="badge badge-success">{{ room.availableRooms }} of {{ room.totalRooms }} room(s) left</span>
-              } @else {
-                <span class="badge badge-danger">Sold out for these dates</span>
-              }
-            </div>
-
-            @if (room.canAccommodateGuests && (room.availableRooms ?? 0) === 0) {
-              <div class="alt-dates-box">
-                <p class="alt-title">Smart Alternative Dates (next 7 days, {{ room.priceBreakdown?.nights }} night{{ (room.priceBreakdown?.nights ?? 1) > 1 ? 's' : '' }}):</p>
-                @if (room.alternativeDates.length > 0) {
-                  <div class="alt-chips">
-                    @for (alt of room.alternativeDates; track alt.checkInDate) {
-                      <button
-                        type="button"
-                        class="alt-chip-btn"
-                        (click)="applyAlternativeDates(alt.checkInDate, alt.checkOutDate, room.id)"
-                      >
-                        <strong>{{ alt.checkInDate }} → {{ alt.checkOutDate }}</strong>
-                        <span>{{ alt.availableRooms }} left · {{ alt.priceBreakdown.totalAmount | currency: alt.priceBreakdown.currency : 'symbol' : '1.0-0' }}</span>
-                      </button>
-                    }
-                  </div>
-                } @else {
-                  <p class="muted alt-empty">No openings available within the next 7 days.</p>
+    @if (loadingRooms && rooms.length === 0) {
+      <div class="card panel">Loading room categories...</div>
+    } @else {
+      <div class="room-list">
+        @for (room of rooms; track room.id) {
+          <article class="card room-card">
+            <div class="room-main">
+              <div class="room-top">
+                <h3>{{ room.name }}</h3>
+                <span class="badge badge-neutral">
+                  Up to {{ room.maxGuests }} guest{{ room.maxGuests > 1 ? 's' : '' }}
+                </span>
+              </div>
+              <p class="room-desc">{{ room.description }}</p>
+              <div class="amenity-list">
+                @for (a of room.amenities; track a) {
+                  <span class="amenity-chip">{{ a }}</span>
                 }
               </div>
-            }
-          </div>
-
-          <div class="room-side">
-            <div class="nightly-rate">
-              <strong>{{ room.basePricePerNight | currency: room.currency : 'symbol' : '1.0-0' }}</strong>
-              <span class="muted">/ night</span>
             </div>
 
-            <app-price-summary [price]="room.priceBreakdown"></app-price-summary>
-
-            <button
-              type="button"
-              class="btn btn-primary full-btn"
-              [disabled]="!room.canAccommodateGuests || (room.availableRooms ?? 0) <= 0"
-              (click)="selectRoomForBooking(room)"
-            >
-              {{ (room.availableRooms ?? 0) > 0 ? 'Book This Room' : 'Unavailable' }}
-            </button>
-          </div>
-        </article>
-      }
-    </div>
-  }
-</section>
-
-@if (selectedRoom) {
-  <section class="card booking-form-card" id="booking-form-section">
-    <div class="form-header">
-      <div>
-        <h2>Complete Your Reservation</h2>
-        <p class="muted">
-          {{ hotel?.name }} · {{ selectedRoom.name }} · {{ guests }} guest(s)
-        </p>
-      </div>
-      <button type="button" class="btn btn-secondary" (click)="cancelSelection()">Close</button>
-    </div>
-
-    <div class="booking-layout">
-      <form [formGroup]="bookingForm" (ngSubmit)="submitBooking()" class="guest-form" novalidate>
-        <div class="field">
-          <label for="guestName">Full Name *</label>
-          <input id="guestName" type="text" formControlName="guestName" placeholder="e.g. Atul Prajapati" />
-          @if (bookingForm.controls.guestName.touched && bookingForm.controls.guestName.invalid) {
-            <span class="field-error">Guest full name is required.</span>
-          }
-        </div>
-
-        <div class="field">
-          <label for="guestEmail">Email Address *</label>
-          <input id="guestEmail" type="email" formControlName="guestEmail" placeholder="you@example.com" />
-          @if (bookingForm.controls.guestEmail.touched && bookingForm.controls.guestEmail.errors) {
-            <span class="field-error">
-              {{ bookingForm.controls.guestEmail.errors['required'] ? 'Email address is required.' : 'Please enter a valid email address.' }}
-            </span>
-          }
-        </div>
-
-        <div class="form-dates-row">
-          <div class="field">
-            <label for="formCheckIn">Check-in Date *</label>
-            <input
-              id="formCheckIn"
-              type="date"
-              [min]="minDate"
-              formControlName="checkIn"
-              (change)="onBookingFormDateChange()"
-            />
-          </div>
-          <div class="field">
-            <label for="formCheckOut">Check-out Date *</label>
-            <input
-              id="formCheckOut"
-              type="date"
-              [min]="bookingForm.controls.checkIn.value || minDate"
-              formControlName="checkOut"
-              (change)="onBookingFormDateChange()"
-            />
-          </div>
-        </div>
-        @if ((bookingForm.controls.checkIn.touched || bookingForm.controls.checkOut.touched) && bookingForm.errors?.['dateRange']) {
-          <span class="field-error">{{ bookingForm.errors?.['dateRange'] }}</span>
+            <div class="room-side">
+              <div class="nightly-rate">
+                <strong>{{ room.basePricePerNight | currency: room.currency : 'symbol' : '1.0-0' }}</strong>
+                <span class="muted">/ night</span>
+              </div>
+              <button type="button" class="btn btn-primary full-btn" (click)="goToAvailability(room.id)">
+                Check Availability
+              </button>
+            </div>
+          </article>
         }
-
-        <div class="field">
-          <label for="guestPhone">Phone Number (Optional)</label>
-          <input id="guestPhone" type="tel" formControlName="guestPhone" placeholder="+91 98765 43210" />
-        </div>
-
-        <div class="field">
-          <label for="specialRequests">Special Requests (Optional)</label>
-          <textarea id="specialRequests" rows="2" formControlName="specialRequests"></textarea>
-        </div>
-
-        <button
-          type="submit"
-          class="btn btn-primary"
-          [disabled]="submittingBooking || loadingRooms"
-        >
-          {{ submittingBooking ? 'Confirming Reservation...' : 'Confirm Booking' }}
-        </button>
-      </form>
-
-      <div>
-        <h4>Backend Price Summary</h4>
-        <app-price-summary [price]="selectedRoom.priceBreakdown"></app-price-summary>
-        <p class="snapshot-note muted">
-          All charges in INR (₹) are calculated by the Spring Boot backend and stored as an immutable booking snapshot.
-        </p>
       </div>
-    </div>
+    }
   </section>
+} @else if (errorMessage) {
+  <div class="card empty-state">
+    <h3>Property Unavailable</h3>
+    <p class="muted">We could not load this hotel. Return to the directory to choose an available property.</p>
+    <a routerLink="/hotels" class="btn btn-primary">Explore Hotels</a>
+  </div>
 }

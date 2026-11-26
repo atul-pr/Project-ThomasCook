@@ -1,0 +1,151 @@
+<app-breadcrumb
+  [items]="breadcrumbs"
+  [backRoute]="['/manage-booking']"
+  backLabel="Back to Manage Booking"
+></app-breadcrumb>
+
+<app-error-banner [message]="errorMessage"></app-error-banner>
+
+@if (successMessage) {
+  <div class="success-banner" role="status">{{ successMessage }}</div>
+}
+
+@if (loading) {
+  <div class="card panel">Loading reservation details...</div>
+} @else if (booking) {
+  <article class="card booking-card">
+    <div class="booking-top">
+      <div>
+        <span class="ref-label">Booking Reference</span>
+        <h1>{{ booking.bookingReference }}</h1>
+      </div>
+      <span
+        class="badge"
+        [class.badge-success]="booking.status === 'CONFIRMED'"
+        [class.badge-danger]="booking.status === 'CANCELLED'"
+      >
+        {{ booking.status }}
+      </span>
+    </div>
+
+    <div class="detail-grid">
+      <div>
+        <h4>Stay Details</h4>
+        <p><strong>Hotel:</strong> {{ booking.hotelName }} ({{ booking.hotelCity }})</p>
+        <p><strong>Room:</strong> {{ booking.roomTypeName }}</p>
+        <p><strong>Check-in:</strong> {{ booking.checkInDate }}</p>
+        <p>
+          <strong>Check-out:</strong> {{ booking.checkOutDate }} ({{ booking.nights }}
+          night{{ booking.nights > 1 ? 's' : '' }})
+        </p>
+        <p><strong>Guests:</strong> {{ booking.guests }}</p>
+      </div>
+
+      <div>
+        <h4>Guest &amp; Price Snapshot</h4>
+        <p><strong>Guest:</strong> {{ booking.guestName }}</p>
+        <p><strong>Email:</strong> {{ booking.guestEmail }}</p>
+        @if (booking.guestPhone) {
+          <p><strong>Phone:</strong> {{ booking.guestPhone }}</p>
+        }
+        <p>
+          <strong>Rate / night:</strong>
+          {{ booking.pricePerNightSnapshot | currency: booking.currency : 'symbol' : '1.0-0' }}
+        </p>
+        <p>
+          <strong>Taxes (GST):</strong>
+          {{ booking.taxAmountSnapshot | currency: booking.currency : 'symbol' : '1.0-2' }}
+        </p>
+        <p class="total-line">
+          <strong>Total Paid Snapshot:</strong>
+          {{ booking.totalAmountSnapshot | currency: booking.currency : 'symbol' : '1.0-2' }}
+        </p>
+      </div>
+    </div>
+
+    @if (booking.specialRequests) {
+      <p class="special-req"><strong>Special Requests:</strong> {{ booking.specialRequests }}</p>
+    }
+
+    @if (confirmingCancel && booking.status === 'CONFIRMED') {
+      <section class="cancel-confirm-panel" aria-labelledby="cancel-confirm-heading">
+        <h3 id="cancel-confirm-heading">Confirm Booking Cancellation</h3>
+        <p>
+          Are you sure you want to cancel reservation
+          <strong>{{ booking.bookingReference }}</strong> at
+          <strong>{{ booking.hotelName }}</strong>?
+        </p>
+        <p class="warning-note">
+          Cancelling this reservation marks it as <strong>CANCELLED</strong> and immediately
+          releases the room availability for other guests.
+        </p>
+        <div class="cancel-confirm-actions">
+          <button type="button" class="btn btn-secondary" [disabled]="cancelling" (click)="keepBooking()">
+            Keep Booking
+          </button>
+          <button type="button" class="btn btn-danger" [disabled]="cancelling" (click)="confirmCancellation()">
+            {{ cancelling ? 'Cancelling...' : 'Confirm Cancellation' }}
+          </button>
+        </div>
+      </section>
+    }
+
+    <div class="booking-footer">
+      <span class="muted timestamps">
+        Booked {{ booking.createdAt | date: 'medium' }}
+        @if (booking.cancelledAt) {
+          · Cancelled {{ booking.cancelledAt | date: 'medium' }}
+        }
+      </span>
+
+      <div class="footer-actions">
+        <a [routerLink]="['/hotels', booking.hotelId]" class="btn btn-secondary">View Hotel</a>
+        <a [routerLink]="['/hotels', booking.hotelId, 'availability']" class="btn btn-secondary">
+          Check Availability
+        </a>
+
+        @if (booking.status === 'CONFIRMED' && !confirmingCancel) {
+          <button type="button" class="btn btn-danger" (click)="requestCancelStep()">
+            Cancel Booking
+          </button>
+        }
+      </div>
+    </div>
+  </article>
+} @else if (needsEmailVerification) {
+  <section class="card verify-card">
+    <span class="section-kicker">Guest Verification</span>
+    <h1>Verify Guest Email</h1>
+    <p class="muted">
+      Enter the guest email associated with booking reference <strong>{{ reference }}</strong> to view or cancel this reservation.
+    </p>
+    <form [formGroup]="verifyForm" (ngSubmit)="verifyAndLoad()" class="verify-form" novalidate>
+      <div class="field">
+        <label for="verifyEmail">Guest Email *</label>
+        <input id="verifyEmail" type="email" formControlName="email" placeholder="you@example.com" />
+        @if (verifyForm.controls.email.touched && verifyForm.controls.email.errors) {
+          <span class="field-error">
+            {{
+              verifyForm.controls.email.errors['required']
+                ? 'Guest email is required.'
+                : 'Please enter a valid email address.'
+            }}
+          </span>
+        }
+      </div>
+      <div class="verify-actions">
+        <button type="submit" class="btn btn-primary">Load Booking Details</button>
+        <a routerLink="/manage-booking" class="btn btn-secondary">Back to Lookup</a>
+      </div>
+    </form>
+  </section>
+} @else {
+  <div class="card empty-state">
+    <h3>Booking Not Found</h3>
+    <p class="muted">Please verify the booking reference and guest email in Manage Booking.</p>
+    <div class="empty-actions">
+      <a routerLink="/manage-booking" class="btn btn-primary">Lookup Another Booking</a>
+      <a routerLink="/hotels" class="btn btn-secondary">Explore Hotels</a>
+    </div>
+  </div>
+}

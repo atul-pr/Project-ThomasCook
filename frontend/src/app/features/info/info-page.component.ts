@@ -1,13 +1,22 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import {
+  BreadcrumbComponent,
+  BreadcrumbItem
+} from '../../shared/components/breadcrumb/breadcrumb.component';
 
 type InfoPageKind = 'about' | 'privacy' | 'terms';
 
 @Component({
   selector: 'app-info-page',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, BreadcrumbComponent],
   template: `
+    <app-breadcrumb
+      [items]="breadcrumbs"
+      [backRoute]="['/hotels']"
+      backLabel="Back to Explore Hotels"
+    ></app-breadcrumb>
     <section class="card info-card">
       @if (kind === 'about') {
         <span class="badge badge-neutral">About StayAtlas</span>
@@ -120,6 +129,18 @@ type InfoPageKind = 'about' | 'privacy' | 'terms';
 export class InfoPageComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   kind: InfoPageKind = 'about';
+
+  get breadcrumbs(): BreadcrumbItem[] {
+    const labelMap: Record<InfoPageKind, string> = {
+      about: 'About StayAtlas',
+      privacy: 'Privacy Policy',
+      terms: 'Terms & Conditions'
+    };
+    return [
+      { label: 'Explore Hotels', route: ['/hotels'] },
+      { label: labelMap[this.kind] }
+    ];
+  }
 
   ngOnInit(): void {
     const dataKind = this.route.snapshot.data['kind'] as InfoPageKind | undefined;

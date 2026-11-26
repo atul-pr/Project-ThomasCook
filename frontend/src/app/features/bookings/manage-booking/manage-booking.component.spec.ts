@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideRouter, ActivatedRoute, convertToParamMap } from '@angular/router';
+import { provideRouter, ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
 import { ManageBookingComponent } from './manage-booking.component';
 import { BookingApiService } from '../../../core/services/booking-api.service';
@@ -32,7 +32,7 @@ describe('ManageBookingComponent', () => {
   };
 
   beforeEach(async () => {
-    bookingApiSpy = jasmine.createSpyObj('BookingApiService', ['lookupBooking', 'cancelBooking']);
+    bookingApiSpy = jasmine.createSpyObj('BookingApiService', ['lookupBooking']);
 
     await TestBed.configureTestingModule({
       imports: [ManageBookingComponent],
@@ -47,31 +47,22 @@ describe('ManageBookingComponent', () => {
     }).compileComponents();
   });
 
-  it('opens confirmation dialog and refreshes status after cancellation', () => {
-    const cancelledBooking = {
-      ...sampleBooking,
-      status: 'CANCELLED' as const,
-      cancelledAt: new Date().toISOString()
-    };
-    bookingApiSpy.lookupBooking.and.returnValues(of(sampleBooking), of(cancelledBooking));
-    bookingApiSpy.cancelBooking.and.returnValue(of(cancelledBooking));
+  it('looks up booking and navigates to manage-booking/:reference', () => {
+    const router = TestBed.inject(Router);
+    const navSpy = spyOn(router, 'navigate');
+    bookingApiSpy.lookupBooking.and.returnValue(of(sampleBooking));
 
     const fixture = TestBed.createComponent(ManageBookingComponent);
     const component = fixture.componentInstance;
     fixture.detectChanges();
 
-    component.lookupForm.setValue({ reference: 'HTL-TEST1234', email: 'atul@example.com' });
+    component.lookupForm.setValue({ reference: 'htl-test1234', email: 'atul@example.com' });
     component.lookup();
-    expect(component.booking?.status).toBe('CONFIRMED');
 
-    component.openCancelDialog();
-    expect(component.cancelDialogOpen).toBeTrue();
-
-    component.confirmCancellation();
-    expect(bookingApiSpy.cancelBooking).toHaveBeenCalledWith('HTL-TEST1234', {
-      email: 'atul@example.com'
+    expect(bookingApiSpy.lookupBooking).toHaveBeenCalledWith('HTL-TEST1234', 'atul@example.com');
+    expect(navSpy).toHaveBeenCalledWith(['/manage-booking', 'HTL-TEST1234'], {
+      queryParams: { email: 'atul@example.com' },
+      state: { booking: sampleBooking }
     });
-    expect(component.booking?.status).toBe('CANCELLED');
-    expect(component.cancelDialogOpen).toBeFalse();
   });
 });

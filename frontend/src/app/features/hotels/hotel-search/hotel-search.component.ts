@@ -170,6 +170,16 @@ export class HotelSearchComponent implements OnInit {
     });
   }
 
+  bookHotel(hotelId: number): void {
+    this.router.navigate(['/hotels', hotelId, 'availability'], {
+      queryParams: {
+        checkIn: this.checkIn,
+        checkOut: this.checkOut,
+        guests: this.guests
+      }
+    });
+  }
+
   loadHotels(): void {
     const dateError = validateDateRange(this.checkIn, this.checkOut);
     if (dateError) {

@@ -58,3 +58,38 @@ export function extractErrorMessage(err: unknown): string {
   }
   return 'An unexpected error occurred.';
 }
+
+export function parsePositiveIntParam(raw: string | null): number | null {
+  if (!raw || !/^\d+$/.test(raw.trim())) {
+    return null;
+  }
+  const value = Number(raw.trim());
+  return Number.isSafeInteger(value) && value > 0 ? value : null;
+}
+
+const SESSION_BOOKING_EMAIL_PREFIX = 'stayatlas-booking-email:';
+
+export function saveBookingSessionEmail(reference: string, email: string): void {
+  const ref = reference.trim().toUpperCase();
+  const addr = email.trim();
+  if (!ref || !addr || typeof sessionStorage === 'undefined') {
+    return;
+  }
+  try {
+    sessionStorage.setItem(`${SESSION_BOOKING_EMAIL_PREFIX}${ref}`, addr);
+  } catch {
+    // Ignore storage quota / private mode failures
+  }
+}
+
+export function getBookingSessionEmail(reference: string): string | null {
+  const ref = reference.trim().toUpperCase();
+  if (!ref || typeof sessionStorage === 'undefined') {
+    return null;
+  }
+  try {
+    return sessionStorage.getItem(`${SESSION_BOOKING_EMAIL_PREFIX}${ref}`);
+  } catch {
+    return null;
+  }
+}

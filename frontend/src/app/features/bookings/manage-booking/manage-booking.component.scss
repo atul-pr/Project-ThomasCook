@@ -2,6 +2,7 @@
   margin-bottom: 1.25rem;
   h1 {
     margin: 0 0 0.25rem;
+    font-size: 1.85rem;
   }
   p {
     margin: 0;
@@ -9,14 +10,14 @@
 }
 
 .lookup-card {
-  padding: 1.15rem;
+  padding: 1.35rem;
   margin-bottom: 1.25rem;
 }
 
 .lookup-grid {
   display: grid;
   grid-template-columns: 1fr 1.2fr auto;
-  gap: 0.75rem;
+  gap: 0.85rem;
   align-items: start;
 }
 
@@ -30,138 +31,8 @@
   font-weight: 600;
 }
 
-.success-banner {
-  background: var(--success-bg);
-  border: 1px solid var(--success-border);
-  color: var(--success-text);
-  padding: 0.85rem 1rem;
-  border-radius: 8px;
-  margin-bottom: 1rem;
-  font-weight: 500;
-}
-
-.booking-card {
-  padding: 1.4rem;
-}
-
-.booking-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid var(--border-hairline);
-  margin-bottom: 1rem;
-  h2 {
-    margin: 0.15rem 0 0;
-    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-    letter-spacing: 0.04em;
-  }
-}
-
-.ref-label {
-  font-size: 0.78rem;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--ink-500);
-}
-
-.detail-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
-  h4 {
-    margin: 0 0 0.6rem;
-    color: var(--ink-950);
-  }
-  p {
-    margin: 0.35rem 0;
-    font-size: 0.94rem;
-    color: var(--ink-700);
-  }
-}
-
-.total-line {
-  margin-top: 0.65rem !important;
-  font-size: 1.05rem !important;
-  color: var(--ink-950) !important;
-}
-
-.special-req {
-  margin: 1rem 0 0;
-  padding: 0.75rem;
-  background: var(--surface-elevated);
-  border: 1px solid var(--border-hairline);
-  border-radius: 8px;
-  font-size: 0.9rem;
-}
-
-.booking-footer {
-  margin-top: 1.25rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--border-hairline);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-}
-
-.timestamps {
-  font-size: 0.83rem;
-}
-
-.footer-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  flex-wrap: wrap;
-}
-
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: var(--modal-backdrop);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-  z-index: 60;
-}
-
-.modal-dialog {
-  max-width: 460px;
-  width: 100%;
-  padding: 1.5rem;
-  box-shadow: var(--shadow-lg);
-  h3 {
-    margin: 0 0 0.6rem;
-  }
-  p {
-    margin: 0 0 0.75rem;
-    color: var(--ink-700);
-    font-size: 0.94rem;
-  }
-}
-
-.modal-note {
-  background: var(--warning-bg);
-  border: 1px solid var(--warning-border);
-  color: var(--warning-text) !important;
-  padding: 0.65rem 0.85rem;
-  border-radius: 8px;
-  font-size: 0.86rem !important;
-}
-
-.modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.65rem;
-  margin-top: 1rem;
-}
-
 @media (max-width: 760px) {
-  .lookup-grid,
-  .detail-grid {
+  .lookup-grid {
     grid-template-columns: 1fr;
   }
   .lookup-action {

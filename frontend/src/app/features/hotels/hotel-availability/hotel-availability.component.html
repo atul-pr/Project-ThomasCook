@@ -1,0 +1,152 @@
+<app-breadcrumb
+  [items]="breadcrumbs"
+  [backRoute]="hotelId ? ['/hotels', hotelId] : ['/hotels']"
+  [backQueryParams]="dateQueryParams"
+  [backLabel]="hotelId ? 'Back to Hotel Details' : 'Back to Explore Hotels'"
+></app-breadcrumb>
+
+<app-error-banner [message]="errorMessage"></app-error-banner>
+
+@if (loadingHotel) {
+  <div class="card panel">Loading property availability...</div>
+} @else if (hotel && hotelId) {
+  <section class="card summary-strip">
+    <img
+      [src]="hotel.imageUrl || '/assets/images/hotel-mumbai.jpg'"
+      [alt]="hotel.name"
+      class="strip-thumb"
+    />
+    <div class="strip-body">
+      <div class="strip-meta">
+        <span class="badge badge-neutral">{{ hotel.starRating }} ★</span>
+        <span class="city-tag">{{ hotel.city }}, {{ hotel.country }}</span>
+      </div>
+      <h1>{{ hotel.name }}</h1>
+      <p class="muted">{{ hotel.address }}</p>
+    </div>
+    <a [routerLink]="['/hotels', hotel.id]" [queryParams]="dateQueryParams" class="btn btn-secondary">
+      Property Overview
+    </a>
+  </section>
+
+  <section class="card date-bar">
+    <div class="date-grid">
+      <div class="field">
+        <label for="availCheckIn">Check-in</label>
+        <input id="availCheckIn" type="date" [min]="minDate" [(ngModel)]="checkIn" />
+      </div>
+      <div class="field">
+        <label for="availCheckOut">Check-out</label>
+        <input id="availCheckOut" type="date" [min]="checkIn || minDate" [(ngModel)]="checkOut" />
+      </div>
+      <div class="field">
+        <label for="availGuests">Guests</label>
+        <select id="availGuests" [(ngModel)]="guests">
+          @for (n of [1, 2, 3, 4, 5]; track n) {
+            <option [ngValue]="n">{{ n }} Guest{{ n > 1 ? 's' : '' }}</option>
+          }
+        </select>
+      </div>
+      <div class="date-btn-wrap">
+        <button type="button" class="btn btn-primary" [disabled]="loadingRooms" (click)="refreshAvailability()">
+          {{ loadingRooms ? 'Checking...' : 'Update Availability' }}
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <section class="rooms-section">
+    <div class="section-head">
+      <div>
+        <span class="section-kicker">Live Inventory</span>
+        <h2>Select Your Room</h2>
+      </div>
+    </div>
+
+    @if (loadingRooms && rooms.length === 0) {
+      <div class="card panel">Checking live room availability...</div>
+    } @else {
+      <div class="room-list">
+        @for (room of rooms; track room.id) {
+          <article class="card room-card" [class.room-highlighted]="highlightedRoomId === room.id">
+            <div class="room-main">
+              <div class="room-top">
+                <h3>{{ room.name }}</h3>
+                <span class="badge badge-neutral">
+                  Up to {{ room.maxGuests }} guest{{ room.maxGuests > 1 ? 's' : '' }}
+                </span>
+              </div>
+              <p class="room-desc">{{ room.description }}</p>
+              <div class="amenity-list">
+                @for (a of room.amenities; track a) {
+                  <span class="amenity-chip">{{ a }}</span>
+                }
+              </div>
+
+              <div class="availability-status">
+                @if (!room.canAccommodateGuests) {
+                  <span class="badge badge-danger">Max {{ room.maxGuests }} guests (reduce guest count)</span>
+                } @else if ((room.availableRooms ?? 0) > 0) {
+                  <span class="badge badge-success">{{ room.availableRooms }} of {{ room.totalRooms }} room(s) left</span>
+                } @else {
+                  <span class="badge badge-danger">Sold out for these dates</span>
+                }
+              </div>
+
+              @if (room.canAccommodateGuests && (room.availableRooms ?? 0) === 0) {
+                <div class="alt-dates-box">
+                  <p class="alt-title">
+                    Smart Alternative Dates (next 7 days, {{ room.priceBreakdown?.nights }} night{{ (room.priceBreakdown?.nights ?? 1) > 1 ? 's' : '' }}):
+                  </p>
+                  @if (room.alternativeDates.length > 0) {
+                    <div class="alt-chips">
+                      @for (alt of room.alternativeDates; track alt.checkInDate) {
+                        <button
+                          type="button"
+                          class="alt-chip-btn"
+                          (click)="applyAlternativeDates(alt.checkInDate, alt.checkOutDate, room.id)"
+                        >
+                          <strong>{{ alt.checkInDate }} → {{ alt.checkOutDate }}</strong>
+                          <span>
+                            {{ alt.availableRooms }} left ·
+                            {{ alt.priceBreakdown.totalAmount | currency: alt.priceBreakdown.currency : 'symbol' : '1.0-0' }}
+                          </span>
+                        </button>
+                      }
+                    </div>
+                  } @else {
+                    <p class="muted alt-empty">No openings available within the next 7 days.</p>
+                  }
+                </div>
+              }
+            </div>
+
+            <div class="room-side">
+              <div class="nightly-rate">
+                <strong>{{ room.basePricePerNight | currency: room.currency : 'symbol' : '1.0-0' }}</strong>
+                <span class="muted">/ night</span>
+              </div>
+
+              <app-price-summary [price]="room.priceBreakdown"></app-price-summary>
+
+              <button
+                type="button"
+                class="btn btn-primary full-btn"
+                [disabled]="!room.canAccommodateGuests || (room.availableRooms ?? 0) <= 0"
+                (click)="proceedToBooking(room)"
+              >
+                {{ (room.availableRooms ?? 0) > 0 ? 'Continue to Booking →' : 'Unavailable' }}
+              </button>
+            </div>
+          </article>
+        }
+      </div>
+    }
+  </section>
+} @else if (errorMessage) {
+  <div class="card empty-state">
+    <h3>Availability Unavailable</h3>
+    <p class="muted">Please verify the hotel ID or choose another property from Explore Hotels.</p>
+    <a routerLink="/hotels" class="btn btn-primary">Explore Hotels</a>
+  </div>
+}

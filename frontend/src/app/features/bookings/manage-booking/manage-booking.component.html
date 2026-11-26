@@ -1,6 +1,15 @@
+<app-breadcrumb
+  [items]="breadcrumbs"
+  [backRoute]="['/hotels']"
+  backLabel="Back to Explore Hotels"
+></app-breadcrumb>
+
 <section class="manage-header">
+  <span class="section-kicker">Guest Self-Service</span>
   <h1>Manage Booking</h1>
-  <p class="muted">Retrieve your reservation details using your unique booking reference and email address.</p>
+  <p class="muted">
+    Retrieve your reservation details or cancel a confirmed stay using your booking reference and email address.
+  </p>
 </section>
 
 <form class="card lookup-card" [formGroup]="lookupForm" (ngSubmit)="lookup()" novalidate>
@@ -17,6 +26,7 @@
         <span class="field-error">Booking reference is required.</span>
       }
     </div>
+
     <div class="field">
       <label for="email">Guest Email</label>
       <input
@@ -27,10 +37,15 @@
       />
       @if (lookupForm.controls.email.touched && lookupForm.controls.email.errors) {
         <span class="field-error">
-          {{ lookupForm.controls.email.errors['required'] ? 'Guest email is required.' : 'Please enter a valid email address.' }}
+          {{
+            lookupForm.controls.email.errors['required']
+              ? 'Guest email is required.'
+              : 'Please enter a valid email address.'
+          }}
         </span>
       }
     </div>
+
     <div class="lookup-action">
       <button type="submit" class="btn btn-primary" [disabled]="loading">
         {{ loading ? 'Searching...' : 'Find Booking' }}
@@ -40,105 +55,3 @@
 </form>
 
 <app-error-banner [message]="errorMessage"></app-error-banner>
-
-@if (successMessage) {
-  <div class="success-banner" role="status">{{ successMessage }}</div>
-}
-
-@if (booking) {
-  <article class="card booking-card">
-    <div class="booking-top">
-      <div>
-        <span class="ref-label">Booking Reference</span>
-        <h2>{{ booking.bookingReference }}</h2>
-      </div>
-      <span
-        class="badge"
-        [class.badge-success]="booking.status === 'CONFIRMED'"
-        [class.badge-danger]="booking.status === 'CANCELLED'"
-      >
-        {{ booking.status }}
-      </span>
-    </div>
-
-    <div class="detail-grid">
-      <div>
-        <h4>Stay Details</h4>
-        <p><strong>Hotel:</strong> {{ booking.hotelName }} ({{ booking.hotelCity }})</p>
-        <p><strong>Room:</strong> {{ booking.roomTypeName }}</p>
-        <p><strong>Check-in:</strong> {{ booking.checkInDate }}</p>
-        <p><strong>Check-out:</strong> {{ booking.checkOutDate }} ({{ booking.nights }} night{{ booking.nights > 1 ? 's' : '' }})</p>
-        <p><strong>Guests:</strong> {{ booking.guests }}</p>
-      </div>
-
-      <div>
-        <h4>Guest &amp; Price Snapshot</h4>
-        <p><strong>Guest:</strong> {{ booking.guestName }}</p>
-        <p><strong>Email:</strong> {{ booking.guestEmail }}</p>
-        @if (booking.guestPhone) {
-          <p><strong>Phone:</strong> {{ booking.guestPhone }}</p>
-        }
-        <p><strong>Rate / night:</strong> {{ booking.pricePerNightSnapshot | currency: booking.currency : 'symbol' : '1.0-0' }}</p>
-        <p><strong>Taxes (GST):</strong> {{ booking.taxAmountSnapshot | currency: booking.currency : 'symbol' : '1.0-2' }}</p>
-        <p class="total-line">
-          <strong>Total Paid Snapshot:</strong>
-          {{ booking.totalAmountSnapshot | currency: booking.currency : 'symbol' : '1.0-2' }}
-        </p>
-      </div>
-    </div>
-
-    @if (booking.specialRequests) {
-      <p class="special-req"><strong>Special Requests:</strong> {{ booking.specialRequests }}</p>
-    }
-
-    <div class="booking-footer">
-      <span class="muted timestamps">
-        Booked {{ booking.createdAt | date: 'medium' }}
-        @if (booking.cancelledAt) {
-          · Cancelled {{ booking.cancelledAt | date: 'medium' }}
-        }
-      </span>
-
-      <div class="footer-actions">
-        <a [routerLink]="['/hotels', booking.hotelId]" class="btn btn-secondary">View Hotel</a>
-
-        @if (booking.status === 'CONFIRMED') {
-          <button type="button" class="btn btn-danger" (click)="openCancelDialog()">
-            Cancel Booking
-          </button>
-        }
-      </div>
-    </div>
-  </article>
-}
-
-@if (cancelDialogOpen && booking) {
-  <div class="modal-backdrop" (click)="closeCancelDialog()">
-    <div
-      class="card modal-dialog"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="cancel-dialog-title"
-      (click)="$event.stopPropagation()"
-    >
-      <h3 id="cancel-dialog-title">Confirm Booking Cancellation</h3>
-      <p>
-        Are you sure you want to cancel reservation
-        <strong>{{ booking.bookingReference }}</strong> at
-        <strong>{{ booking.hotelName }}</strong>?
-      </p>
-      <p class="modal-note">
-        Cancelling this reservation marks it as <strong>CANCELLED</strong> and immediately
-        releases the room availability for other guests.
-      </p>
-      <div class="modal-actions">
-        <button type="button" class="btn btn-secondary" [disabled]="cancelling" (click)="closeCancelDialog()">
-          Keep Booking
-        </button>
-        <button type="button" class="btn btn-danger" [disabled]="cancelling" (click)="confirmCancellation()">
-          {{ cancelling ? 'Cancelling...' : 'Confirm Cancellation' }}
-        </button>
-      </div>
-    </div>
-  </div>
-}
