@@ -84,4 +84,12 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     );
 
     boolean existsByBookingReference(String bookingReference);
+
+    @Query("""
+            SELECT b FROM Booking b
+            JOIN FETCH b.hotel
+            JOIN FETCH b.roomType
+            WHERE b.idempotencyKey = :idempotencyKey
+            """)
+    Optional<Booking> findByIdempotencyKeyWithDetails(@Param("idempotencyKey") String idempotencyKey);
 }

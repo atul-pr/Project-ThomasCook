@@ -1,9 +1,11 @@
 package com.hotelportal.room.service;
 
 import com.hotelportal.availability.dto.AlternativeDateSuggestion;
+import com.hotelportal.availability.dto.HotelAvailabilityResponse;
 import com.hotelportal.availability.service.AvailabilityService;
 import com.hotelportal.common.exception.BadRequestException;
 import com.hotelportal.common.exception.ResourceNotFoundException;
+import com.hotelportal.hotel.entity.Hotel;
 import com.hotelportal.hotel.repository.HotelRepository;
 import com.hotelportal.hotel.service.HotelService;
 import com.hotelportal.pricing.dto.PriceBreakdown;
@@ -15,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -75,6 +78,67 @@ public class RoomService {
                 ? availabilityService.findAlternativeDateRanges(soldOutEligibleTypes, checkIn, checkOut, guests)
                 : Collections.emptyMap();
 
+        return mapRoomResponses(hotelId, roomTypes, hasDates, checkIn, checkOut, guests, bookedCounts, alternativesByRoom);
+    }
+
+    public HotelAvailabilityResponse getHotelAvailability(Long hotelId, LocalDate checkIn, LocalDate checkOut, int guests) {
+        if (guests < 1) {
+            throw new BadRequestException("Guest count must be at least 1");
+        }
+        availabilityService.validateDateRange(checkIn, checkOut);
+
+        Hotel hotel = hotelRepository.findById(hotelId)
+                .orElseThrow(() -> new ResourceNotFoundException("Hotel not found with id: " + hotelId));
+
+        List<RoomType> roomTypes = roomTypeRepository.findByHotelIdOrderByBasePricePerNightAsc(hotelId);
+        List<Long> roomTypeIds = roomTypes.stream().map(RoomType::getId).toList();
+        Map<Long, Integer> bookedCounts = availabilityService.getBookedCountsByRoomType(roomTypeIds, checkIn, checkOut);
+
+        List<RoomType> soldOutEligibleTypes = new ArrayList<>();
+        int totalAvailableRooms = 0;
+        for (RoomType rt : roomTypes) {
+            int booked = bookedCounts.getOrDefault(rt.getId(), 0);
+            int avail = Math.max(0, rt.getTotalRooms() - booked);
+            if (guests <= rt.getMaxGuests()) {
+                totalAvailableRooms += avail;
+                if (avail == 0) {
+                    soldOutEligibleTypes.add(rt);
+                }
+            }
+        }
+
+        Map<Long, List<AlternativeDateSuggestion>> alternativesByRoom = !soldOutEligibleTypes.isEmpty()
+                ? availabilityService.findAlternativeDateRanges(soldOutEligibleTypes, checkIn, checkOut, guests)
+                : Collections.emptyMap();
+
+        List<RoomTypeResponse> rooms = mapRoomResponses(
+                hotelId, roomTypes, true, checkIn, checkOut, guests, bookedCounts, alternativesByRoom
+        );
+        int nights = Math.toIntExact(ChronoUnit.DAYS.between(checkIn, checkOut));
+
+        return new HotelAvailabilityResponse(
+                hotel.getId(),
+                hotel.getName(),
+                hotel.getCity(),
+                checkIn,
+                checkOut,
+                nights,
+                guests,
+                totalAvailableRooms,
+                rooms
+        );
+    }
+
+    private List<RoomTypeResponse> mapRoomResponses(
+            Long hotelId,
+            List<RoomType> roomTypes,
+            boolean hasDates,
+            LocalDate checkIn,
+            LocalDate checkOut,
+            int guests,
+            Map<Long, Integer> bookedCounts,
+            Map<Long, List<AlternativeDateSuggestion>> alternativesByRoom
+    ) {
         return roomTypes.stream()
                 .map(rt -> {
                     Integer availableRooms = null;

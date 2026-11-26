@@ -1,5 +1,6 @@
 package com.hotelportal.booking.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.hotelportal.booking.entity.Booking;
 import com.hotelportal.booking.entity.BookingStatus;
 
@@ -30,6 +31,36 @@ public record BookingResponse(
         Instant createdAt,
         Instant cancelledAt
 ) {
+    @JsonProperty("email")
+    public String email() {
+        return guestEmail;
+    }
+
+    @JsonProperty("checkIn")
+    public LocalDate checkIn() {
+        return checkInDate;
+    }
+
+    @JsonProperty("checkOut")
+    public LocalDate checkOut() {
+        return checkOutDate;
+    }
+
+    @JsonProperty("numberOfNights")
+    public int numberOfNights() {
+        return nights;
+    }
+
+    @JsonProperty("pricePerNight")
+    public BigDecimal pricePerNight() {
+        return pricePerNightSnapshot;
+    }
+
+    @JsonProperty("totalAmount")
+    public BigDecimal totalAmount() {
+        return totalAmountSnapshot;
+    }
+
     public static BookingResponse from(Booking booking) {
         return new BookingResponse(
                 booking.getBookingReference(),

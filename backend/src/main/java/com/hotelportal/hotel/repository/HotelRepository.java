@@ -13,9 +13,12 @@ public interface HotelRepository extends JpaRepository<Hotel, Long> {
 
     @Query("""
             SELECT h FROM Hotel h
-            WHERE (:city IS NULL OR :city = '' OR LOWER(h.city) LIKE LOWER(CONCAT('%', :city, '%')))
+            WHERE (:location IS NULL OR :location = ''
+                   OR LOWER(h.city) LIKE LOWER(CONCAT('%', :location, '%'))
+                   OR LOWER(h.address) LIKE LOWER(CONCAT('%', :location, '%'))
+                   OR LOWER(h.country) LIKE LOWER(CONCAT('%', :location, '%')))
             """)
-    Page<Hotel> searchByCity(@Param("city") String city, Pageable pageable);
+    Page<Hotel> searchByLocation(@Param("location") String location, Pageable pageable);
 
     @Query("SELECT DISTINCT h.city FROM Hotel h ORDER BY h.city ASC")
     List<String> findDistinctCities();

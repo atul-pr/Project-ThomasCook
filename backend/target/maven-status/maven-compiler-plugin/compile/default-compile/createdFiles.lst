@@ -22,8 +22,10 @@ com\hotelportal\common\config\CorsConfig.class
 com\hotelportal\availability\controller\AvailabilityController.class
 com\hotelportal\common\exception\GlobalExceptionHandler.class
 com\hotelportal\booking\dto\CreateBookingRequest.class
+com\hotelportal\availability\dto\HotelAvailabilityResponse.class
 com\hotelportal\booking\entity\Booking.class
 com\hotelportal\pricing\service\PricingService.class
+com\hotelportal\booking\service\BookingService$BookingCreationResult.class
 com\hotelportal\room\service\RoomService.class
 com\hotelportal\common\dto\PageResponse.class
 com\hotelportal\hotel\service\HotelService.class

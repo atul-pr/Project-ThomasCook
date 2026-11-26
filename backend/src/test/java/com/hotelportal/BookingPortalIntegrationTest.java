@@ -8,6 +8,7 @@ import com.hotelportal.booking.entity.BookingStatus;
 import com.hotelportal.booking.repository.BookingRepository;
 import com.hotelportal.booking.service.BookingService;
 import com.hotelportal.common.exception.RoomUnavailableException;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -52,6 +53,11 @@ class BookingPortalIntegrationTest {
 
     @Autowired
     private BookingRepository bookingRepository;
+
+    @BeforeEach
+    void cleanBookings() {
+        bookingRepository.deleteAll();
+    }
 
     @Test
     void searchHotelsSupportsLocationFilterPaginationAndDateValidation() throws Exception {

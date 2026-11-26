@@ -28,6 +28,7 @@ C:\Users\Atul Prajapati\Downloads\tv\hotel-booking-portal\backend\src\main\java\
 C:\Users\Atul Prajapati\Downloads\tv\hotel-booking-portal\backend\src\main\java\com\hotelportal\availability\controller\AvailabilityController.java
 C:\Users\Atul Prajapati\Downloads\tv\hotel-booking-portal\backend\src\main\java\com\hotelportal\hotel\entity\Hotel.java
 C:\Users\Atul Prajapati\Downloads\tv\hotel-booking-portal\backend\src\main\java\com\hotelportal\common\dto\ApiError.java
+C:\Users\Atul Prajapati\Downloads\tv\hotel-booking-portal\backend\src\main\java\com\hotelportal\availability\dto\HotelAvailabilityResponse.java
 C:\Users\Atul Prajapati\Downloads\tv\hotel-booking-portal\backend\src\main\java\com\hotelportal\booking\entity\Booking.java
 C:\Users\Atul Prajapati\Downloads\tv\hotel-booking-portal\backend\src\main\java\com\hotelportal\hotel\repository\HotelRepository.java
 C:\Users\Atul Prajapati\Downloads\tv\hotel-booking-portal\backend\src\main\java\com\hotelportal\common\exception\BadRequestException.java

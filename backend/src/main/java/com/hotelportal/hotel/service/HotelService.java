@@ -24,14 +24,20 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
 @Transactional(readOnly = true)
 public class HotelService {
 
-    private static final Set<String> ALLOWED_SORT_FIELDS = Set.of("id", "name", "city", "starRating");
+    private static final Map<String, String> SORT_FIELD_ALIASES = Map.of(
+            "id", "id",
+            "name", "name",
+            "city", "city",
+            "location", "city",
+            "starRating", "starRating",
+            "rating", "starRating"
+    );
 
     private final HotelRepository hotelRepository;
     private final RoomTypeRepository roomTypeRepository;
@@ -67,12 +73,12 @@ public class HotelService {
 
         int safePage = Math.max(0, page);
         int safeSize = Math.min(Math.max(1, size), 50);
-        String safeSort = ALLOWED_SORT_FIELDS.contains(sortBy) ? sortBy : "starRating";
+        String safeSort = SORT_FIELD_ALIASES.getOrDefault(sortBy, "starRating");
         Sort.Direction sortDir = "asc".equalsIgnoreCase(direction) ? Sort.Direction.ASC : Sort.Direction.DESC;
         Pageable pageable = PageRequest.of(safePage, safeSize, Sort.by(sortDir, safeSort).and(Sort.by("id")));
 
-        String normalizedCity = city == null ? null : city.trim();
-        Page<Hotel> hotelPage = hotelRepository.searchByCity(normalizedCity, pageable);
+        String normalizedLocation = city == null ? null : city.trim();
+        Page<Hotel> hotelPage = hotelRepository.searchByLocation(normalizedLocation, pageable);
 
         List<Long> hotelIds = hotelPage.getContent().stream().map(Hotel::getId).toList();
         Map<Long, List<RoomType>> roomsByHotel = hotelIds.isEmpty()

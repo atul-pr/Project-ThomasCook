@@ -1,5 +1,6 @@
 com\hotelportal\availability\service\AvailabilityServiceTest.class
-com\hotelportal\BookingPortalIntegrationTest.class
 com\hotelportal\booking\service\BookingServiceUnitTest.class
 com\hotelportal\SchemaMigrationIntegrationTest.class
 com\hotelportal\pricing\service\PricingServiceTest.class
+com\hotelportal\HotelAndAvailabilityApiTest.class
+com\hotelportal\BookingPortalIntegrationTest.class

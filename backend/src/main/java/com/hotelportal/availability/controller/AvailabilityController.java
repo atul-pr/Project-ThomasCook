@@ -13,7 +13,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/availability")
+@RequestMapping({"/api/v1/availability", "/api/availability"})
 public class AvailabilityController {
 
     private final AvailabilityService availabilityService;

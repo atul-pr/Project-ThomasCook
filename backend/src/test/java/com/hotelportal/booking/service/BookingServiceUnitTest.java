@@ -11,6 +11,7 @@ import com.hotelportal.common.exception.BadRequestException;
 import com.hotelportal.common.exception.BookingConflictException;
 import com.hotelportal.common.exception.RoomUnavailableException;
 import com.hotelportal.hotel.entity.Hotel;
+import com.hotelportal.hotel.repository.HotelRepository;
 import com.hotelportal.pricing.service.PricingService;
 import com.hotelportal.room.entity.RoomType;
 import com.hotelportal.room.repository.RoomTypeRepository;
@@ -19,6 +20,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -33,6 +35,8 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class BookingServiceUnitTest {
 
+    @Mock
+    private HotelRepository hotelRepository;
     @Mock
     private RoomTypeRepository roomTypeRepository;
     @Mock
@@ -49,21 +53,23 @@ class BookingServiceUnitTest {
                 roomTypeRepository, bookingRepository, pricingService, 30
         );
         bookingService = new BookingService(
-                roomTypeRepository, bookingRepository, availabilityService, pricingService, referenceGenerator
+                hotelRepository, roomTypeRepository, bookingRepository, availabilityService, pricingService, referenceGenerator
         );
     }
 
     @Test
     void createBookingAcquiresPessimisticLockAndStoresPriceSnapshot() {
         Hotel hotel = new Hotel();
+        ReflectionTestUtils.setField(hotel, "id", 1L);
         hotel.setName("Mumbai Palace");
         hotel.setCity("Mumbai");
 
         RoomType roomType = new RoomType();
+        ReflectionTestUtils.setField(roomType, "id", 2L);
         roomType.setHotel(hotel);
         roomType.setName("Sea View Suite");
-        roomType.setBasePricePerNight(new BigDecimal("300.00"));
-        roomType.setCurrency("USD");
+        roomType.setBasePricePerNight(new BigDecimal("19500.00"));
+        roomType.setCurrency("INR");
         roomType.setMaxGuests(3);
         roomType.setTotalRooms(2);
 
@@ -88,18 +94,20 @@ class BookingServiceUnitTest {
         assertThat(response.status()).isEqualTo(BookingStatus.CONFIRMED);
         assertThat(response.guestEmail()).isEqualTo("atul@example.com");
         assertThat(response.nights()).isEqualTo(2);
-        assertThat(response.pricePerNightSnapshot()).isEqualByComparingTo("300.00");
-        assertThat(response.taxAmountSnapshot()).isEqualByComparingTo("72.00");
-        assertThat(response.totalAmountSnapshot()).isEqualByComparingTo("672.00");
+        assertThat(response.pricePerNightSnapshot()).isEqualByComparingTo("19500.00");
+        assertThat(response.taxAmountSnapshot()).isEqualByComparingTo("4680.00");
+        assertThat(response.totalAmountSnapshot()).isEqualByComparingTo("43680.00");
     }
 
     @Test
     void createBookingRejectsWhenCapacityExceededOrNoRoomsAvailable() {
         Hotel hotel = new Hotel();
+        ReflectionTestUtils.setField(hotel, "id", 1L);
         RoomType roomType = new RoomType();
+        ReflectionTestUtils.setField(roomType, "id", 1L);
         roomType.setHotel(hotel);
         roomType.setName("Deluxe");
-        roomType.setBasePricePerNight(new BigDecimal("100.00"));
+        roomType.setBasePricePerNight(new BigDecimal("11500.00"));
         roomType.setMaxGuests(2);
         roomType.setTotalRooms(1);
 
@@ -123,9 +131,11 @@ class BookingServiceUnitTest {
     }
 
     @Test
-    void cancelBookingRejectsAlreadyCancelledBooking() {
+    void cancelBookingLocksRoomTypeAndRejectsAlreadyCancelledBooking() {
         Hotel hotel = new Hotel();
+        ReflectionTestUtils.setField(hotel, "id", 1L);
         RoomType roomType = new RoomType();
+        ReflectionTestUtils.setField(roomType, "id", 1L);
         Booking existing = new Booking();
         existing.setBookingReference("HTL-11112222");
         existing.setHotel(hotel);
@@ -133,10 +143,13 @@ class BookingServiceUnitTest {
         existing.setGuestEmail("guest@example.com");
         existing.setStatus(BookingStatus.CANCELLED);
 
+        when(bookingRepository.findByReferenceAndEmail("HTL-11112222", "guest@example.com"))
+                .thenReturn(Optional.of(existing));
         when(bookingRepository.findByReferenceAndEmailForUpdate("HTL-11112222", "guest@example.com"))
                 .thenReturn(Optional.of(existing));
 
         assertThatThrownBy(() -> bookingService.cancelBooking("htl-11112222", new CancelBookingRequest("GUEST@example.com")))
                 .isInstanceOf(BookingConflictException.class);
+        verify(roomTypeRepository).findByIdWithHotelForUpdate(1L);
     }
 }

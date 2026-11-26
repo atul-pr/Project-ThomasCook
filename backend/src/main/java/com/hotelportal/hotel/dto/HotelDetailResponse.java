@@ -1,5 +1,7 @@
 package com.hotelportal.hotel.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.List;
 
 public record HotelDetailResponse(
@@ -13,4 +15,13 @@ public record HotelDetailResponse(
         List<String> amenities,
         String imageUrl
 ) {
+    @JsonProperty("location")
+    public String location() {
+        return city;
+    }
+
+    @JsonProperty("rating")
+    public int rating() {
+        return starRating;
+    }
 }

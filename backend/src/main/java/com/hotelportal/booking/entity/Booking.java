@@ -88,6 +88,9 @@ public class Booking {
     @Column(name = "cancelled_at")
     private Instant cancelledAt;
 
+    @Column(name = "idempotency_key", unique = true, length = 100)
+    private String idempotencyKey;
+
     @Version
     @Column(nullable = false)
     private Long version = 0L;
@@ -241,6 +244,14 @@ public class Booking {
 
     public void setCancelledAt(Instant cancelledAt) {
         this.cancelledAt = cancelledAt;
+    }
+
+    public String getIdempotencyKey() {
+        return idempotencyKey;
+    }
+
+    public void setIdempotencyKey(String idempotencyKey) {
+        this.idempotencyKey = idempotencyKey;
     }
 
     public Long getVersion() {

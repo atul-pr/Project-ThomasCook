@@ -11,6 +11,7 @@ import com.hotelportal.common.exception.BadRequestException;
 import com.hotelportal.common.exception.BookingConflictException;
 import com.hotelportal.common.exception.ResourceNotFoundException;
 import com.hotelportal.common.exception.RoomUnavailableException;
+import com.hotelportal.hotel.repository.HotelRepository;
 import com.hotelportal.pricing.dto.PriceBreakdown;
 import com.hotelportal.pricing.service.PricingService;
 import com.hotelportal.room.entity.RoomType;
@@ -20,10 +21,15 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.Locale;
+import java.util.Optional;
 
 @Service
 public class BookingService {
 
+    public record BookingCreationResult(BookingResponse booking, boolean idempotentReplay) {
+    }
+
+    private final HotelRepository hotelRepository;
     private final RoomTypeRepository roomTypeRepository;
     private final BookingRepository bookingRepository;
     private final AvailabilityService availabilityService;
@@ -31,12 +37,14 @@ public class BookingService {
     private final BookingReferenceGenerator referenceGenerator;
 
     public BookingService(
+            HotelRepository hotelRepository,
             RoomTypeRepository roomTypeRepository,
             BookingRepository bookingRepository,
             AvailabilityService availabilityService,
             PricingService pricingService,
             BookingReferenceGenerator referenceGenerator
     ) {
+        this.hotelRepository = hotelRepository;
         this.roomTypeRepository = roomTypeRepository;
         this.bookingRepository = bookingRepository;
         this.availabilityService = availabilityService;
@@ -46,14 +54,52 @@ public class BookingService {
 
     @Transactional
     public BookingResponse createBooking(CreateBookingRequest request) {
+        return createBookingWithIdempotency(request, request.idempotencyKey()).booking();
+    }
+
+    @Transactional
+    public BookingCreationResult createBookingWithIdempotency(CreateBookingRequest request, String idempotencyKeyHeader) {
         availabilityService.validateDateRange(request.checkInDate(), request.checkOutDate());
+
+        String normalizedEmail = normalizeEmail(request.guestEmail());
+        String normalizedIdempotencyKey = normalizeIdempotencyKey(
+                idempotencyKeyHeader != null && !idempotencyKeyHeader.isBlank()
+                        ? idempotencyKeyHeader
+                        : request.idempotencyKey()
+        );
+
+        if (normalizedIdempotencyKey != null) {
+            Optional<Booking> existing = bookingRepository.findByIdempotencyKeyWithDetails(normalizedIdempotencyKey);
+            if (existing.isPresent()) {
+                return verifyAndReplay(existing.get(), request, normalizedEmail);
+            }
+        }
+
+        if (request.hotelId() != null && !hotelRepository.existsById(request.hotelId())) {
+            throw new ResourceNotFoundException("Hotel not found with id: " + request.hotelId());
+        }
 
         // Acquire pessimistic write lock (SELECT ... FOR UPDATE) on the RoomType row
         // to serialize concurrent bookings for the same room type and prevent phantom overbooking.
         RoomType roomType = roomTypeRepository.findByIdWithHotelForUpdate(request.roomTypeId())
                 .orElseThrow(() -> new ResourceNotFoundException("Room type not found with id: " + request.roomTypeId()));
 
-        if (request.guests() > roomType.getMaxGuests()) {
+        if (request.hotelId() != null && !roomType.getHotel().getId().equals(request.hotelId())) {
+            throw new BadRequestException(
+                    "Room type " + request.roomTypeId() + " does not belong to hotel " + request.hotelId()
+            );
+        }
+
+        // Re-check idempotency inside the RoomType lock to guard against concurrent duplicate clicks.
+        if (normalizedIdempotencyKey != null) {
+            Optional<Booking> existingUnderLock = bookingRepository.findByIdempotencyKeyWithDetails(normalizedIdempotencyKey);
+            if (existingUnderLock.isPresent()) {
+                return verifyAndReplay(existingUnderLock.get(), request, normalizedEmail);
+            }
+        }
+
+        int guests = request.guests() != null ? request.guests() : 1;
+        if (guests > roomType.getMaxGuests()) {
             throw new BadRequestException(
                     "Selected room supports up to " + roomType.getMaxGuests() + " guests"
             );
@@ -85,13 +131,13 @@ public class BookingService {
         booking.setHotel(roomType.getHotel());
         booking.setRoomType(roomType);
         booking.setGuestName(request.guestName().trim());
-        booking.setGuestEmail(request.guestEmail().trim().toLowerCase(Locale.ROOT));
+        booking.setGuestEmail(normalizedEmail);
         booking.setGuestPhone(request.guestPhone() != null && !request.guestPhone().isBlank()
                 ? request.guestPhone().trim()
                 : null);
         booking.setCheckInDate(request.checkInDate());
         booking.setCheckOutDate(request.checkOutDate());
-        booking.setGuests(request.guests());
+        booking.setGuests(guests);
         booking.setNights(price.nights());
         booking.setPricePerNightSnapshot(price.pricePerNight());
         booking.setTaxAmountSnapshot(price.taxAmount());
@@ -101,9 +147,10 @@ public class BookingService {
         booking.setSpecialRequests(request.specialRequests() != null && !request.specialRequests().isBlank()
                 ? request.specialRequests().trim()
                 : null);
+        booking.setIdempotencyKey(normalizedIdempotencyKey);
 
         Booking saved = bookingRepository.save(booking);
-        return BookingResponse.from(saved);
+        return new BookingCreationResult(BookingResponse.from(saved), false);
     }
 
     @Transactional(readOnly = true)
@@ -124,6 +171,14 @@ public class BookingService {
         String normalizedRef = normalizeReference(reference);
         String normalizedEmail = normalizeEmail(request.email());
 
+        Booking lookup = bookingRepository.findByReferenceAndEmail(normalizedRef, normalizedEmail)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "No booking found matching reference '" + normalizedRef + "' and provided email"
+                ));
+
+        // Lock associated RoomType row first to keep lock ordering consistent with createBooking.
+        roomTypeRepository.findByIdWithHotelForUpdate(lookup.getRoomType().getId());
+
         Booking booking = bookingRepository.findByReferenceAndEmailForUpdate(normalizedRef, normalizedEmail)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "No booking found matching reference '" + normalizedRef + "' and provided email"
@@ -137,6 +192,23 @@ public class BookingService {
         booking.setCancelledAt(Instant.now());
         Booking updated = bookingRepository.save(booking);
         return BookingResponse.from(updated);
+    }
+
+    private BookingCreationResult verifyAndReplay(
+            Booking existing,
+            CreateBookingRequest request,
+            String normalizedEmail
+    ) {
+        boolean samePayload = existing.getRoomType().getId().equals(request.roomTypeId())
+                && existing.getGuestEmail().equalsIgnoreCase(normalizedEmail)
+                && existing.getCheckInDate().equals(request.checkInDate())
+                && existing.getCheckOutDate().equals(request.checkOutDate());
+        if (!samePayload) {
+            throw new BookingConflictException(
+                    "Idempotency key has already been used for a different booking request"
+            );
+        }
+        return new BookingCreationResult(BookingResponse.from(existing), true);
     }
 
     private String generateUniqueReference() {
@@ -161,5 +233,16 @@ public class BookingService {
             throw new BadRequestException("Guest email is required");
         }
         return email.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private String normalizeIdempotencyKey(String key) {
+        if (key == null || key.isBlank()) {
+            return null;
+        }
+        String trimmed = key.trim();
+        if (trimmed.length() > 100) {
+            throw new BadRequestException("Idempotency-Key must be at most 100 characters");
+        }
+        return trimmed;
     }
 }
