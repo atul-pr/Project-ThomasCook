@@ -26,8 +26,8 @@ import { PriceBreakdown } from '../../../core/models/hotel.model';
   `,
   styles: [`
     .price-box {
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
+      background: var(--surface-elevated);
+      border: 1px solid var(--border-hairline);
       border-radius: 10px;
       padding: 0.85rem 1rem;
       font-size: 0.88rem;
@@ -35,17 +35,17 @@ import { PriceBreakdown } from '../../../core/models/hotel.model';
     .price-row {
       display: flex;
       justify-content: space-between;
-      color: #475569;
+      color: var(--ink-700);
       margin-bottom: 0.42rem;
     }
     .price-total {
       display: flex;
       justify-content: space-between;
-      border-top: 1px solid #cbd5e1;
+      border-top: 1px solid var(--border-input);
       padding-top: 0.55rem;
       margin-top: 0.45rem;
       font-weight: 700;
-      color: #0b1f3a;
+      color: var(--ink-950);
       font-size: 0.98rem;
     }
   `]

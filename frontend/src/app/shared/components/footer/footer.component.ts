@@ -62,10 +62,11 @@ import { RouterLink } from '@angular/router';
   `,
   styles: [`
     .site-footer {
-      background: #111827;
+      background: var(--footer-bg);
       color: #d4d4d8;
       margin-top: auto;
-      border-top: 1px solid #1f2937;
+      border-top: 1px solid var(--border-hairline);
+      transition: background-color 0.2s ease, border-color 0.2s ease;
     }
     .footer-grid {
       display: grid;
@@ -133,7 +134,7 @@ import { RouterLink } from '@angular/router';
     }
     .footer-bottom {
       border-top: 1px solid rgba(255, 255, 255, 0.08);
-      background: #0b0f19;
+      background: var(--footer-bottom-bg);
     }
     .bottom-inner {
       display: flex;

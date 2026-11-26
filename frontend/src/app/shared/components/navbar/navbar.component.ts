@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { ThemeService } from '../../../core/services/theme.service';
 
 @Component({
   selector: 'app-navbar',
@@ -9,14 +10,10 @@ import { Router, RouterLink, RouterLinkActive } from '@angular/router';
     <header class="navbar">
       <div class="container navbar-inner">
         <a routerLink="/hotels" class="brand" (click)="closeMenu()">
-          <span class="brand-mark" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2">
-              <path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/>
-            </svg>
-          </span>
+          <span class="brand-mark" aria-hidden="true">S</span>
           <span class="brand-text">
             <strong>StayAtlas</strong>
-            <small>India Luxury &amp; Business Stays</small>
+            <small>Curated Stays · India</small>
           </span>
         </a>
 
@@ -33,6 +30,37 @@ import { Router, RouterLink, RouterLinkActive } from '@angular/router';
         </nav>
 
         <div class="nav-actions">
+          <div class="theme-control" role="group" aria-label="Color theme">
+            <button
+              type="button"
+              class="theme-btn"
+              (click)="themeService.toggleLightDark()"
+              [attr.aria-label]="themeService.isDark() ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
+              [title]="themeService.isDark() ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
+            >
+              @if (themeService.isDark()) {
+                <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <circle cx="12" cy="12" r="4"/>
+                  <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+                </svg>
+              } @else {
+                <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z"/>
+                </svg>
+              }
+            </button>
+            <button
+              type="button"
+              class="theme-auto-btn"
+              [class.active]="themeService.preference() === 'system'"
+              (click)="themeService.setPreference('system')"
+              aria-label="Use system default theme"
+              title="Use system default theme"
+            >
+              Auto
+            </button>
+          </div>
+
           <button type="button" class="btn btn-primary explore-cta" (click)="goExplore()">
             Explore Stays
           </button>
@@ -57,6 +85,34 @@ import { Router, RouterLink, RouterLinkActive } from '@angular/router';
             <a routerLink="/hotels" routerLinkActive="active" (click)="closeMenu()">Explore Hotels</a>
             <a routerLink="/manage-booking" routerLinkActive="active" (click)="closeMenu()">My Bookings</a>
             <a routerLink="/about" routerLinkActive="active" (click)="closeMenu()">About</a>
+
+            <div class="mobile-theme-row" role="group" aria-label="Select theme">
+              <button
+                type="button"
+                class="mobile-theme-opt"
+                [class.active]="themeService.preference() === 'light'"
+                (click)="themeService.setPreference('light')"
+              >
+                Light
+              </button>
+              <button
+                type="button"
+                class="mobile-theme-opt"
+                [class.active]="themeService.preference() === 'dark'"
+                (click)="themeService.setPreference('dark')"
+              >
+                Dark
+              </button>
+              <button
+                type="button"
+                class="mobile-theme-opt"
+                [class.active]="themeService.preference() === 'system'"
+                (click)="themeService.setPreference('system')"
+              >
+                System
+              </button>
+            </div>
+
             <button type="button" class="btn btn-primary mobile-cta" (click)="goExplore()">
               Explore Stays
             </button>
@@ -73,35 +129,37 @@ import { Router, RouterLink, RouterLinkActive } from '@angular/router';
       z-index: 40;
     }
     .navbar {
-      background: rgba(255, 255, 255, 0.96);
-      backdrop-filter: blur(10px);
-      border-bottom: 1px solid #e2e8f0;
-      box-shadow: 0 2px 10px rgba(11, 31, 58, 0.04);
+      background: var(--navbar-bg);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border-hairline);
+      transition: background-color 0.2s ease, border-color 0.2s ease;
     }
     .navbar-inner {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      height: 74px;
-      gap: 1.5rem;
+      height: 76px;
+      gap: 1.25rem;
     }
     .brand {
       display: flex;
       align-items: center;
-      gap: 0.72rem;
+      gap: 0.75rem;
       text-decoration: none;
-      color: #0b1f3a;
+      color: var(--ink-950);
     }
     .brand-mark {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 40px;
-      height: 40px;
-      border-radius: 11px;
-      background: linear-gradient(135deg, #0b1f3a, #1d4ed8);
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: var(--btn-primary-bg);
       color: #ffffff;
-      box-shadow: 0 4px 10px rgba(29, 78, 216, 0.22);
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 1.2rem;
+      font-weight: 700;
     }
     .brand-text {
       display: flex;
@@ -109,49 +167,91 @@ import { Router, RouterLink, RouterLinkActive } from '@angular/router';
       line-height: 1.15;
 
       strong {
-        font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
-        font-size: 1.2rem;
-        font-weight: 800;
-        color: #0b1f3a;
-        letter-spacing: -0.025em;
+        font-family: Georgia, 'Times New Roman', serif;
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--ink-950);
+        letter-spacing: -0.02em;
       }
 
       small {
-        font-size: 0.72rem;
-        color: #64748b;
-        font-weight: 500;
+        font-size: 0.68rem;
+        color: var(--accent-bronze);
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
       }
     }
     .nav-desktop {
       display: flex;
       align-items: center;
-      gap: 0.45rem;
+      gap: 0.55rem;
     }
     .nav-desktop a {
-      color: #334155;
+      color: var(--ink-700);
       text-decoration: none;
-      font-weight: 600;
-      font-size: 0.94rem;
+      font-weight: 500;
+      font-size: 0.93rem;
       padding: 0.5rem 0.9rem;
-      border-radius: 8px;
-      transition: background 0.15s, color 0.15s;
+      border-radius: 999px;
+      transition: background-color 0.15s, color 0.15s;
     }
     .nav-desktop a:hover {
-      color: #0b1f3a;
-      background: #f1f5f9;
+      color: var(--ink-950);
+      background: var(--surface-muted);
     }
     .nav-desktop a.active {
-      color: #1d4ed8;
-      background: #eff6ff;
+      color: var(--ink-950);
+      background: var(--surface-hover);
+      font-weight: 600;
     }
     .nav-actions {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
+      gap: 0.65rem;
+    }
+    .theme-control {
+      display: inline-flex;
+      align-items: center;
+      background: var(--surface-card);
+      border: 1px solid var(--border-input);
+      border-radius: 999px;
+      padding: 2px;
+    }
+    .theme-btn,
+    .theme-auto-btn {
+      border: none;
+      background: transparent;
+      color: var(--ink-700);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      transition: background-color 0.15s, color 0.15s;
+    }
+    .theme-btn {
+      width: 32px;
+      height: 32px;
+      &:hover {
+        background: var(--surface-muted);
+        color: var(--ink-950);
+      }
+    }
+    .theme-auto-btn {
+      height: 28px;
+      padding: 0 0.58rem;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      &.active {
+        background: var(--btn-primary-bg);
+        color: #ffffff;
+      }
     }
     .explore-cta {
-      padding: 0.58rem 1.15rem;
-      font-size: 0.88rem;
+      padding: 0.56rem 1.2rem;
+      font-size: 0.86rem;
       border-radius: 999px;
     }
     .hamburger {
@@ -161,8 +261,8 @@ import { Router, RouterLink, RouterLinkActive } from '@angular/router';
       gap: 5px;
       width: 40px;
       height: 40px;
-      border: 1px solid #cbd5e1;
-      background: #ffffff;
+      border: 1px solid var(--border-input);
+      background: var(--surface-card);
       border-radius: 8px;
       cursor: pointer;
       padding: 0 9px;
@@ -171,38 +271,58 @@ import { Router, RouterLink, RouterLinkActive } from '@angular/router';
         display: block;
         width: 100%;
         height: 2px;
-        background: #0b1f3a;
+        background: var(--ink-950);
         border-radius: 2px;
       }
     }
     .nav-mobile {
-      border-top: 1px solid #e2e8f0;
-      background: #ffffff;
-      padding: 0.9rem 0 1.1rem;
+      border-top: 1px solid var(--border-hairline);
+      background: var(--ivory-bg);
+      padding: 0.9rem 0 1.2rem;
     }
     .mobile-links {
       display: flex;
       flex-direction: column;
-      gap: 0.4rem;
+      gap: 0.45rem;
 
       a {
         text-decoration: none;
-        color: #1e293b;
+        color: var(--ink-900);
         font-weight: 600;
-        padding: 0.65rem 0.8rem;
+        padding: 0.65rem 0.85rem;
         border-radius: 8px;
       }
 
       a.active {
-        background: #eff6ff;
-        color: #1d4ed8;
+        background: var(--surface-hover);
+      }
+    }
+    .mobile-theme-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.4rem;
+      padding: 0.35rem 0;
+    }
+    .mobile-theme-opt {
+      padding: 0.48rem;
+      border-radius: 8px;
+      border: 1px solid var(--border-input);
+      background: var(--surface-card);
+      color: var(--ink-700);
+      font-weight: 600;
+      font-size: 0.82rem;
+      cursor: pointer;
+      &.active {
+        background: var(--btn-primary-bg);
+        border-color: var(--btn-primary-bg);
+        color: #ffffff;
       }
     }
     .mobile-cta {
-      margin-top: 0.45rem;
+      margin-top: 0.35rem;
       width: 100%;
     }
-    @media (max-width: 820px) {
+    @media (max-width: 860px) {
       .nav-desktop,
       .explore-cta {
         display: none;
@@ -214,9 +334,10 @@ import { Router, RouterLink, RouterLinkActive } from '@angular/router';
   `]
 })
 export class NavbarComponent {
-  mobileMenuOpen = false;
+  readonly themeService = inject(ThemeService);
+  private readonly router = inject(Router);
 
-  constructor(private readonly router: Router) {}
+  mobileMenuOpen = false;
 
   toggleMenu(): void {
     this.mobileMenuOpen = !this.mobileMenuOpen;

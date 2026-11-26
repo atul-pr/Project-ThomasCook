@@ -66,7 +66,7 @@ type InfoPageKind = 'about' | 'privacy' | 'terms';
       font-size: 1.9rem;
     }
     .lead {
-      color: #475569;
+      color: var(--ink-700);
       font-size: 1.02rem;
       max-width: 760px;
       margin: 0 0 1.5rem;
@@ -78,8 +78,8 @@ type InfoPageKind = 'about' | 'privacy' | 'terms';
       margin-bottom: 1.75rem;
     }
     .info-block {
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
+      background: var(--surface-elevated);
+      border: 1px solid var(--border-hairline);
       border-radius: 12px;
       padding: 1.2rem;
 
@@ -91,7 +91,7 @@ type InfoPageKind = 'about' | 'privacy' | 'terms';
       p {
         margin: 0;
         font-size: 0.9rem;
-        color: #475569;
+        color: var(--ink-700);
       }
     }
     .policy-list {
@@ -99,8 +99,11 @@ type InfoPageKind = 'about' | 'privacy' | 'terms';
       flex-direction: column;
       gap: 0.85rem;
       padding-left: 1.25rem;
-      color: #334155;
+      color: var(--ink-700);
       margin: 0 0 1.75rem;
+      a {
+        color: var(--accent-blue);
+      }
     }
     .info-actions {
       display: flex;

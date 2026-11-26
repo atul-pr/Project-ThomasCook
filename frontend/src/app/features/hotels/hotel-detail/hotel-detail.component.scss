@@ -75,8 +75,8 @@
 .confirmation-card {
   padding: 1.45rem;
   margin-bottom: 1.5rem;
-  border-color: #86efac;
-  background: #f0fdf4;
+  border-color: var(--success-border);
+  background: var(--success-bg);
 }
 
 .conf-head {
@@ -91,8 +91,8 @@
 }
 
 .ref-box {
-  background: #ffffff;
-  border: 1px solid #bbf7d0;
+  background: var(--surface-card);
+  border: 1px solid var(--success-border);
   padding: 0.6rem 0.9rem;
   border-radius: 10px;
   span {
@@ -102,7 +102,7 @@
   strong {
     font-size: 1.12rem;
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-    color: var(--navy-900);
+    color: var(--ink-950);
   }
 }
 
@@ -114,9 +114,9 @@
 }
 
 .copy-btn {
-  border: 1px solid #86efac;
-  background: #ecfdf5;
-  color: #047857;
+  border: 1px solid var(--success-border);
+  background: var(--success-bg);
+  color: var(--success-text);
   border-radius: 6px;
   padding: 0.22rem 0.55rem;
   font-size: 0.76rem;
@@ -131,7 +131,7 @@
   p {
     margin: 0;
     font-size: 0.92rem;
-    color: #1e293b;
+    color: var(--ink-900);
   }
 }
 
@@ -154,7 +154,7 @@
   grid-template-columns: 1.55fr 1fr;
   gap: 1.4rem;
   padding: 1.35rem;
-  transition: box-shadow 0.2s;
+  transition: box-shadow 0.2s, background-color 0.2s;
   &:hover {
     box-shadow: var(--shadow-md);
   }
@@ -186,14 +186,14 @@
   padding: 0.85rem 1rem;
   border-radius: 10px;
   background: var(--blue-50);
-  border: 1px solid #bfdbfe;
+  border: 1px solid var(--blue-border);
 }
 
 .alt-title {
   margin: 0 0 0.55rem;
   font-size: 0.84rem;
   font-weight: 700;
-  color: var(--navy-900);
+  color: var(--ink-950);
 }
 
 .alt-chips {
@@ -207,16 +207,16 @@
   flex-direction: column;
   align-items: flex-start;
   gap: 0.15rem;
-  background: #ffffff;
-  border: 1px solid #93c5fd;
+  background: var(--surface-card);
+  border: 1px solid var(--blue-border);
   border-radius: 8px;
   padding: 0.48rem 0.78rem;
   cursor: pointer;
   font-size: 0.8rem;
-  color: var(--navy-900);
+  color: var(--ink-950);
   &:hover {
-    border-color: var(--blue-600);
-    background: #f8fafc;
+    border-color: var(--blue-500);
+    background: var(--surface-elevated);
   }
   span {
     color: var(--text-secondary);
@@ -237,9 +237,8 @@
 }
 
 .nightly-rate strong {
-  font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
   font-size: 1.4rem;
-  color: var(--navy-900);
+  color: var(--ink-950);
 }
 
 .full-btn {
@@ -249,7 +248,7 @@
 .booking-form-card {
   margin-top: 1.5rem;
   padding: 1.5rem;
-  border-color: #93c5fd;
+  border-color: var(--blue-border);
   box-shadow: var(--shadow-md);
 }
 
@@ -285,7 +284,7 @@
 }
 
 .field-error {
-  color: #b91c1c;
+  color: var(--error-text);
   font-size: 0.8rem;
   font-weight: 600;
 }

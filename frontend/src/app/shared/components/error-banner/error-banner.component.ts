@@ -12,9 +12,9 @@ import { Component, Input } from '@angular/core';
   `,
   styles: [`
     .error-banner {
-      background: #fef2f2;
-      border: 1px solid #fecaca;
-      color: #991b1b;
+      background: var(--error-bg);
+      border: 1px solid var(--error-border);
+      color: var(--error-text);
       padding: 0.85rem 1rem;
       border-radius: 8px;
       margin-bottom: 1rem;
